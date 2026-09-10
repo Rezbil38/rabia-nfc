@@ -143,6 +143,7 @@
         opacity: 1;
     }
 
+    /* El texto se superpone sobre la foto, como en un póster, en vez de ir en una caja aparte */
     .text-slide {
         position: absolute;
         left: 0;
@@ -154,6 +155,7 @@
         z-index: 2;
     }
 
+    /* Modo "solo texto": para el primer paso, sin imagen, centrado en toda la pantalla */
     #card.text-mode .image-container {
         display: none;
     }
@@ -174,6 +176,12 @@
         line-height: 1.45;
     }
 
+    #card.text-mode .sub-phrase {
+        margin-top: 20px;
+        font-size: 14px;
+        min-height: 18px;
+    }
+
     .caption {
         font-family: 'Cormorant Garamond', serif;
         font-style: italic;
@@ -183,13 +191,15 @@
         font-size: 19px;
         letter-spacing: 0.3px;
         text-shadow: 0 2px 10px rgba(0,0,0,0.6);
-        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
     }
 
-    /* Animación suave al cambiar de texto */
-    .caption.fade-out {
-        opacity: 0;
-        transform: translateY(-6px);
+    .sub-phrase {
+        margin-top: 10px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 13px;
+        letter-spacing: 0.3px;
+        color: rgba(232, 212, 171, 0.65);
+        transition: opacity 0.35s ease;
     }
 
     .button-container {
@@ -199,6 +209,7 @@
         justify-content: center;
     }
 
+    /* Botón único de tamaño normal, ya no ocupa todo el ancho */
     .button-container.single {
         justify-content: center;
     }
@@ -220,6 +231,7 @@
         transform: scale(0.96);
     }
 
+    /* Botones que sí deben repartirse el ancho (paso 2: Sí / No) */
     .button-container:not(.single) .btn {
         flex: 1;
     }
@@ -230,14 +242,8 @@
         border: 1px solid rgba(212, 175, 110, 0.6);
     }
 
-    .btn-primary:hover:not(:disabled) {
+    .btn-primary:hover {
         background: rgba(212, 175, 110, 0.08);
-    }
-
-    .btn-primary:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-        border-color: rgba(212, 175, 110, 0.25);
     }
 
     .btn-success {
@@ -253,6 +259,7 @@
         z-index: 20;
     }
 
+    /* Una vez que empieza a escaparse, se ve sólido y con más contraste sobre cualquier foto */
     .btn-danger.floating {
         background: rgba(8, 8, 8, 0.92);
         color: #e8d4ab;
@@ -308,8 +315,10 @@
         <button class="btn btn-primary" onclick="startApp()">Entrar</button>
     </div>
 
+    <!-- Contenedor oculto para el reproductor de Spotify -->
     <div id="spotify-embed"></div>
 
+    <!-- Aviso de respaldo: solo aparece si el audio no arrancó (típico en iPhone) -->
     <button class="retry-audio hidden" id="retry-audio" onclick="retryAudio()">🔊 Toca aquí si no escuchas la música</button>
 
     <div class="image-container">
@@ -319,7 +328,7 @@
     <p class="caption" id="caption-text"></p>
 
     <div class="button-container single" id="step-1-buttons">
-        <button class="btn btn-primary" id="btn-next-step1" onclick="goToStep2()" disabled>Espera (5s)</button>
+        <button class="btn btn-primary" onclick="goToStep2()">Siguiente</button>
     </div>
 
     <div class="button-container hidden" id="step-2-buttons">
@@ -332,21 +341,19 @@
 
 <script>
     // ============ CONFIGURACIÓN ============
+    // Reemplaza por el ID de tu canción de Spotify (lo que va después de /track/ en el link)
     const spotifyTrackId = "35ttE4t8lQZA2vuCYDg4G7";
 
+    // El paso 1 no usa imagen (se muestra solo el texto, centrado).
+    // Para el paso 2 y para la respuesta "Sí", pon aquí el link directo de TU imagen
+    // (por ejemplo, subiéndola a postimages.org o imgur y copiando el "enlace directo").
     const images = {
         step2: "https://i.postimg.cc/8c6rxMyy/Whats-App-Image-2026-09-10-at-6-02-41-PM.jpg",
         optionYes: "https://i.postimg.cc/1Xj9Qjdh/rabia.jpg"
     };
 
-    // Tres frases sucesivas para el primer paso
-    const step1Phrases = [
-        "Hay algo que quiero decirte...",
-        "Desde que te conocí, todo se siente diferente...",
-        "Así que hoy quiero hacerte una pregunta..."
-    ];
-
     const captions = {
+        step1: "Hay algo que quiero preguntarte...",
         step2: "¿Quieres ser mi pareja?",
         optionYes: "Sabía que dirías que sí ✦"
     };
@@ -356,12 +363,10 @@
     const step1Buttons = document.getElementById('step-1-buttons');
     const step2Buttons = document.getElementById('step-2-buttons');
     const startOverlay = document.getElementById('start-overlay');
-    const btnNextStep1 = document.getElementById('btn-next-step1');
 
     let spotifyController = null;
-    let phraseInterval = null;
 
-    // Partículas doradas
+    // Genera partículas doradas flotando de fondo
     function spawnHearts() {
         setInterval(() => {
             const heart = document.createElement('div');
@@ -376,7 +381,7 @@
     }
     spawnHearts();
 
-    // Cambiar imagen con fundido suave
+    // Cambia de imagen con un pequeño fundido (fade)
     function setImage(src, caption) {
         mainImage.classList.remove('show');
         setTimeout(() => {
@@ -388,42 +393,10 @@
 
     const card = document.getElementById('card');
 
-    // Inicializar primer texto
-    captionText.textContent = step1Phrases[0];
+    // Muestra el texto del paso 1 directamente (no hay imagen en este paso)
+    captionText.textContent = captions.step1;
 
-    // Transición fluida entre las frases (cada 1.5s)
-    function startPhraseCycle() {
-        let index = 0;
-        phraseInterval = setInterval(() => {
-            captionText.classList.add('fade-out');
-            
-            setTimeout(() => {
-                index = (index + 1) % step1Phrases.length;
-                captionText.textContent = step1Phrases[index];
-                captionText.classList.remove('fade-out');
-            }, 400);
-        }, 1500);
-    }
-
-    // Cuenta regresiva de 5 segundos para desbloquear el botón
-    function startCountdown() {
-        let timeLeft = 5;
-        btnNextStep1.disabled = true;
-        btnNextStep1.textContent = `Espera (${timeLeft}s)`;
-
-        const countdownInterval = setInterval(() => {
-            timeLeft--;
-            if (timeLeft > 0) {
-                btnNextStep1.textContent = `Espera (${timeLeft}s)`;
-            } else {
-                clearInterval(countdownInterval);
-                btnNextStep1.disabled = false;
-                btnNextStep1.textContent = "Siguiente";
-            }
-        }, 1000);
-    }
-
-    // SPOTIFY IFRAME API
+    // ============ SPOTIFY IFRAME API ============
     let isCurrentlyPlaying = false;
     const retryAudioBtn = document.getElementById('retry-audio');
 
@@ -436,6 +409,7 @@
         };
         const callback = (EmbedController) => {
             spotifyController = EmbedController;
+            // Nos avisa en todo momento si el audio está sonando o no
             spotifyController.addListener('playback_update', (e) => {
                 if (e.data) isCurrentlyPlaying = e.data.isPaused === false;
             });
@@ -443,15 +417,21 @@
         IFrameAPI.createController(element, options, callback);
     };
 
+    // Iniciar música (debe llamarse desde un clic/toque del usuario; los navegadores
+    // no permiten que el audio arranque solo, sin interacción, por eso existe el botón "Entrar")
     function startApp() {
         const tryPlay = () => {
             spotifyController.play();
+            // Insiste en volver al segundo 0 varias veces mientras carga,
+            // para ganarle a la posición que Spotify recuerda de antes
             [50, 200, 400, 700, 1100, 1600].forEach(delay => {
                 setTimeout(() => {
                     if (spotifyController) spotifyController.seek(0);
                 }, delay);
             });
 
+            // Respaldo para iPhone/Safari: si en 1.8s el audio sigue sin sonar,
+            // muestra un botón para reintentar con un toque directo y fresco
             setTimeout(() => {
                 if (!isCurrentlyPlaying) {
                     retryAudioBtn.classList.remove('hidden');
@@ -462,6 +442,7 @@
         if (spotifyController) {
             tryPlay();
         } else {
+            // Si la API aún no cargó, reintenta en cuanto esté lista
             const waitForController = setInterval(() => {
                 if (spotifyController) {
                     tryPlay();
@@ -469,14 +450,10 @@
                 }
             }, 200);
         }
-
         startOverlay.classList.add('hidden');
-        
-        // Iniciar las frases rotativas y la cuenta regresiva del botón al entrar
-        startPhraseCycle();
-        startCountdown();
     }
 
+    // Se llama al tocar el aviso de respaldo: intento fresco, directo desde ese toque
     function retryAudio() {
         if (spotifyController) {
             spotifyController.play();
@@ -486,9 +463,6 @@
     }
 
     function goToStep2() {
-        // Detener el cambio de frases al avanzar
-        if (phraseInterval) clearInterval(phraseInterval);
-
         card.classList.remove('text-mode');
         setImage(images.step2, captions.step2);
         step1Buttons.classList.add('hidden');
@@ -502,7 +476,7 @@
         step2Buttons.classList.add('hidden');
     }
 
-    // BOTÓN "NO" QUE ESCAPA
+    // ============ BOTÓN "NO" QUE SE ESCAPA ============
     const noBtn = document.getElementById('no-btn');
 
     function dodgeNoBtn(e) {
@@ -523,8 +497,11 @@
         noBtn.style.margin = '0';
     }
 
+    // En computador: se escapa apenas el cursor se acerca
     noBtn.addEventListener('mouseenter', dodgeNoBtn);
+    // En celular: se escapa apenas se intenta tocar (antes de que el "click" se complete)
     noBtn.addEventListener('touchstart', dodgeNoBtn, { passive: false });
+    // Por si acaso alguien logra hacer click, igual se mueve y no pasa nada más
     noBtn.addEventListener('click', dodgeNoBtn);
 </script>
 
