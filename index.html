@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0a">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Para ti</title>
+<title>Marianusky</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -231,6 +231,30 @@
         display: none !important;
     }
 
+    .retry-audio {
+        position: absolute;
+        top: calc(14px + env(safe-area-inset-top));
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(232, 212, 171, 0.95);
+        color: #111;
+        border: none;
+        padding: 9px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        z-index: 30;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+        cursor: pointer;
+        animation: pulse-in 0.3s ease;
+    }
+
+    @keyframes pulse-in {
+        from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
     #spotify-embed {
         position: absolute;
         width: 1px;
@@ -253,6 +277,9 @@
 
     <!-- Contenedor oculto para el reproductor de Spotify -->
     <div id="spotify-embed"></div>
+
+    <!-- Aviso de respaldo: solo aparece si el audio no arrancó (típico en iPhone) -->
+    <button class="retry-audio hidden" id="retry-audio" onclick="retryAudio()">🔊 Toca aquí si no escuchas la música</button>
 
     <div class="image-container">
         <img id="main-image" src="" alt="Imagen actual">
@@ -281,8 +308,8 @@
     // Para el paso 2 y para la respuesta "Sí", pon aquí el link directo de TU imagen
     // (por ejemplo, subiéndola a postimages.org o imgur y copiando el "enlace directo").
     const images = {
-        step2: "https://i.postimg.cc/1Xj9Qjdh/rabia.jpg",
-        optionYes: "https://images.unsplash.com/photo-1574539299747-c0dcef95d2ef?fm=jpg&q=80&w=1200&auto=format&fit=crop"
+        step2: "https://i.postimg.cc/8c6rxMyy/Whats-App-Image-2026-09-10-at-6-02-41-PM.jpg",
+        optionYes: "https://i.postimg.cc/1Xj9Qjdh/rabia.jpg"
     };
 
     const captions = {
@@ -330,9 +357,9 @@
     captionText.textContent = captions.step1;
 
     // ============ SPOTIFY IFRAME API ============
-    // Spotify recuerda en dónde quedó la canción la última vez que se reprodujo
-    // en este dispositivo/navegador, y a veces esa posición "gana" a nuestro seek(0)
-    // si lo mandamos demasiado pronto. Por eso insistimos varias veces seguidas.
+    let isCurrentlyPlaying = false;
+    const retryAudioBtn = document.getElementById('retry-audio');
+
     window.onSpotifyIframeApiReady = (IFrameAPI) => {
         const element = document.getElementById('spotify-embed');
         const options = {
@@ -342,6 +369,10 @@
         };
         const callback = (EmbedController) => {
             spotifyController = EmbedController;
+            // Nos avisa en todo momento si el audio está sonando o no
+            spotifyController.addListener('playback_update', (e) => {
+                if (e.data) isCurrentlyPlaying = e.data.isPaused === false;
+            });
         };
         IFrameAPI.createController(element, options, callback);
     };
@@ -358,6 +389,14 @@
                     if (spotifyController) spotifyController.seek(0);
                 }, delay);
             });
+
+            // Respaldo para iPhone/Safari: si en 1.8s el audio sigue sin sonar,
+            // muestra un botón para reintentar con un toque directo y fresco
+            setTimeout(() => {
+                if (!isCurrentlyPlaying) {
+                    retryAudioBtn.classList.remove('hidden');
+                }
+            }, 1800);
         };
 
         if (spotifyController) {
@@ -372,6 +411,15 @@
             }, 200);
         }
         startOverlay.classList.add('hidden');
+    }
+
+    // Se llama al tocar el aviso de respaldo: intento fresco, directo desde ese toque
+    function retryAudio() {
+        if (spotifyController) {
+            spotifyController.play();
+            setTimeout(() => spotifyController.seek(0), 300);
+        }
+        retryAudioBtn.classList.add('hidden');
     }
 
     function goToStep2() {
