@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Para ti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    html, body {
+        height: 100%;
+    }
+
+    body {
+        background: radial-gradient(circle at 50% 0%, #1a1a1a 0%, #0a0a0a 60%, #000000 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        min-height: 100dvh;
+        overflow: hidden;
+        position: fixed;
+        inset: 0;
+    }
+
+    /* Partículas doradas flotando de fondo */
+    .heart {
+        position: fixed;
+        bottom: -50px;
+        color: rgba(212, 175, 110, 0.45);
+        font-size: 14px;
+        pointer-events: none;
+        animation: float 10s linear infinite;
+        z-index: 0;
+    }
+
+    @keyframes float {
+        0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
+    }
+
+    .card {
+        width: 100%;
+        max-width: 390px;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 844px;
+        background: linear-gradient(175deg, #141414 0%, #0c0c0c 100%);
+        border: 1px solid rgba(212, 175, 110, 0.18);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        padding: calc(34px + env(safe-area-inset-top)) 20px calc(30px + env(safe-area-inset-bottom)) 20px;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+        position: relative;
+        z-index: 1;
+        border-radius: 22px;
+        overflow: hidden;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(175deg, #151515 0%, #0a0a0a 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+        border-radius: 22px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .overlay h2 {
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic;
+        font-weight: 500;
+        font-size: 30px;
+        letter-spacing: 0.5px;
+        color: #e8d4ab;
+        margin-bottom: 30px;
+    }
+
+    .divider {
+        width: 40px;
+        height: 1px;
+        background: rgba(212, 175, 110, 0.6);
+        margin-bottom: 22px;
+    }
+
+    .image-container {
+        width: 100%;
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        border-radius: 16px;
+        margin-bottom: 24px;
+        background: #111111;
+        border: 1px solid rgba(212, 175, 110, 0.12);
+    }
+
+    .image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 16px;
+        opacity: 0;
+        transition: opacity 0.7s ease-in-out;
+        filter: saturate(0.92) contrast(1.03);
+    }
+
+    .image-container img.show {
+        opacity: 1;
+    }
+
+    .caption {
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic;
+        font-weight: 500;
+        color: #e8d4ab;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 19px;
+        letter-spacing: 0.3px;
+        min-height: 24px;
+    }
+
+    .button-container {
+        width: 100%;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+
+    /* Botón único de tamaño normal, ya no ocupa todo el ancho */
+    .button-container.single {
+        justify-content: center;
+    }
+
+    .btn {
+        padding: 13px 22px;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        text-align: center;
+    }
+
+    .btn:active {
+        transform: scale(0.96);
+    }
+
+    /* Botones que sí deben repartirse el ancho (paso 2: Sí / No) */
+    .button-container:not(.single) .btn {
+        flex: 1;
+    }
+
+    .btn-primary {
+        background: transparent;
+        color: #e8d4ab;
+        border: 1px solid rgba(212, 175, 110, 0.6);
+    }
+
+    .btn-primary:hover {
+        background: rgba(212, 175, 110, 0.08);
+    }
+
+    .btn-success {
+        background: #e8d4ab;
+        color: #111111;
+    }
+
+    .btn-danger {
+        background: transparent;
+        color: #999;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        transition: top 0.22s ease, left 0.22s ease, transform 0.15s ease;
+        z-index: 20;
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    #spotify-embed {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+        overflow: hidden;
+    }
+</style>
+</head>
+<body>
+
+<div class="card">
+    <div class="overlay" id="start-overlay">
+        <h2>Toca para empezar</h2>
+        <div class="divider"></div>
+        <button class="btn btn-primary" onclick="startApp()">Entrar</button>
+    </div>
+
+    <!-- Contenedor oculto para el reproductor de Spotify -->
+    <div id="spotify-embed"></div>
+
+    <div class="image-container">
+        <img id="main-image" src="" alt="Imagen actual">
+    </div>
+
+    <p class="caption" id="caption-text"></p>
+
+    <div class="button-container single" id="step-1-buttons">
+        <button class="btn btn-primary" onclick="goToStep2()">Siguiente</button>
+    </div>
+
+    <div class="button-container hidden" id="step-2-buttons">
+        <button class="btn btn-success" onclick="chooseOption('si')">Sí</button>
+        <button class="btn btn-danger" id="no-btn">No</button>
+    </div>
+</div>
+
+<script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+
+<script>
+    // ============ CONFIGURACIÓN ============
+    // Reemplaza por el ID de tu canción de Spotify (lo que va después de /track/ en el link)
+    const spotifyTrackId = "2bvpGAr0UUflIcj1d2mRAx";
+
+    const images = {
+        step1: "https://i.pinimg.com/originals/xx/xx/xx/tu_imagen_1.jpg",
+        step2: "https://i.pinimg.com/originals/xx/xx/xx/tu_imagen_2.jpg",
+        optionYes: "https://i.pinimg.com/originals/xx/xx/xx/tu_imagen_si.jpg",
+        optionNo: "https://i.pinimg.com/originals/xx/xx/xx/tu_imagen_no.jpg"
+    };
+
+    const captions = {
+        step1: "",
+        step2: "¿Quieres ser mi...?",
+        optionYes: "Sabía que dirías que sí",
+        optionNo: "Puedes tocar de nuevo, sé que en el fondo quieres decir que sí"
+    };
+
+    const mainImage = document.getElementById('main-image');
+    const captionText = document.getElementById('caption-text');
+    const step1Buttons = document.getElementById('step-1-buttons');
+    const step2Buttons = document.getElementById('step-2-buttons');
+    const startOverlay = document.getElementById('start-overlay');
+
+    let spotifyController = null;
+
+    // Genera partículas doradas flotando de fondo
+    function spawnHearts() {
+        setInterval(() => {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.textContent = '✦';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.fontSize = (10 + Math.random() * 10) + 'px';
+            heart.style.animationDuration = (8 + Math.random() * 5) + 's';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 14000);
+        }, 900);
+    }
+    spawnHearts();
+
+    // Cambia de imagen con un pequeño fundido (fade)
+    function setImage(src, caption) {
+        mainImage.classList.remove('show');
+        setTimeout(() => {
+            mainImage.src = src;
+            captionText.textContent = caption || '';
+            mainImage.onload = () => mainImage.classList.add('show');
+        }, 300);
+    }
+
+    setImage(images.step1, captions.step1);
+
+    // ============ SPOTIFY IFRAME API ============
+    // Esta función la llama automáticamente el script de Spotify cuando está lista
+    window.onSpotifyIframeApiReady = (IFrameAPI) => {
+        const element = document.getElementById('spotify-embed');
+        const options = {
+            uri: 'spotify:track:' + spotifyTrackId,
+            width: '1',
+            height: '1'
+        };
+        const callback = (EmbedController) => {
+            spotifyController = EmbedController;
+        };
+        IFrameAPI.createController(element, options, callback);
+    };
+
+    // Iniciar música (debe llamarse desde un clic del usuario, por las políticas de autoplay del navegador)
+    function startApp() {
+        if (spotifyController) {
+            spotifyController.play();
+        } else {
+            // Si la API aún no cargó, reintenta en cuanto esté lista
+            const waitForController = setInterval(() => {
+                if (spotifyController) {
+                    spotifyController.play();
+                    clearInterval(waitForController);
+                }
+            }, 200);
+        }
+        startOverlay.classList.add('hidden');
+    }
+
+    function goToStep2() {
+        setImage(images.step2, captions.step2);
+        step1Buttons.classList.add('hidden');
+        step2Buttons.classList.remove('hidden');
+    }
+
+    function chooseOption(option) {
+        if (option === 'si') {
+            setImage(images.optionYes, captions.optionYes);
+        }
+        step2Buttons.classList.add('hidden');
+    }
+
+    // ============ BOTÓN "NO" QUE SE ESCAPA ============
+    const noBtn = document.getElementById('no-btn');
+
+    function dodgeNoBtn(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rect = noBtn.getBoundingClientRect();
+        const margin = 16;
+        const maxX = window.innerWidth - rect.width - margin;
+        const maxY = window.innerHeight - rect.height - margin;
+
+        const newX = margin + Math.random() * (maxX - margin);
+        const newY = margin + Math.random() * (maxY - margin);
+
+        noBtn.style.position = 'fixed';
+        noBtn.style.left = newX + 'px';
+        noBtn.style.top = newY + 'px';
+        noBtn.style.margin = '0';
+    }
+
+    // En computador: se escapa apenas el cursor se acerca
+    noBtn.addEventListener('mouseenter', dodgeNoBtn);
+    // En celular: se escapa apenas se intenta tocar (antes de que el "click" se complete)
+    noBtn.addEventListener('touchstart', dodgeNoBtn, { passive: false });
+    // Por si acaso alguien logra hacer click, igual se mueve y no pasa nada más
+    noBtn.addEventListener('click', dodgeNoBtn);
+</script>
+
+</body>
+</html>
