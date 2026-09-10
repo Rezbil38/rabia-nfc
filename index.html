@@ -100,6 +100,14 @@
         margin-bottom: 30px;
     }
 
+    .overlay-sub {
+        font-size: 13px;
+        letter-spacing: 0.4px;
+        color: rgba(232, 212, 171, 0.6);
+        margin-bottom: 28px;
+        text-transform: uppercase;
+    }
+
     .divider {
         width: 40px;
         height: 1px;
@@ -223,6 +231,7 @@
     <div class="overlay" id="start-overlay">
         <h2>Toca para empezar</h2>
         <div class="divider"></div>
+        <p class="overlay-sub">Ponte los audífonos, si puedes.</p>
         <button class="btn btn-primary" onclick="startApp()">Entrar</button>
     </div>
 
@@ -253,17 +262,15 @@
     const spotifyTrackId = "2bvpGAr0UUflIcj1d2mRAx";
 
     const images = {
-        step1: "https://i.pinimg.com/originals/xx/xx/xx/tu_imagen_1.jpg",
-        step2: "https://i.pinimg.com/originals/xx/xx/xx/tu_imagen_2.jpg",
-        optionYes: "https://i.pinimg.com/originals/xx/xx/xx/tu_imagen_si.jpg",
-        optionNo: "https://i.pinimg.com/originals/xx/xx/xx/tu_imagen_no.jpg"
+        step1: "https://images.unsplash.com/photo-1749652912678-e38a37bb03e1?fm=jpg&q=80&w=1200&auto=format&fit=crop",
+        step2: "https://images.unsplash.com/photo-1687452573021-5857da937651?fm=jpg&q=80&w=1200&auto=format&fit=crop",
+        optionYes: "https://images.unsplash.com/photo-1574539299747-c0dcef95d2ef?fm=jpg&q=80&w=1200&auto=format&fit=crop"
     };
 
     const captions = {
-        step1: "",
-        step2: "¿Quieres ser mi...?",
-        optionYes: "Sabía que dirías que sí",
-        optionNo: "Puedes tocar de nuevo, sé que en el fondo quieres decir que sí"
+        step1: "Hay algo que quiero preguntarte...",
+        step2: "¿Quieres ser mi pareja?",
+        optionYes: "Sabía que dirías que sí ✦"
     };
 
     const mainImage = document.getElementById('main-image');
