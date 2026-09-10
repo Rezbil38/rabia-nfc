@@ -142,6 +142,22 @@
         opacity: 1;
     }
 
+    /* Modo "solo texto": para el primer paso, sin imagen, centrado */
+    #card.text-mode .image-container {
+        display: none;
+    }
+
+    #card.text-mode .caption {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        line-height: 1.45;
+        margin-bottom: 0;
+        padding: 0 8px;
+    }
+
     .caption {
         font-family: 'Cormorant Garamond', serif;
         font-style: italic;
@@ -227,7 +243,7 @@
 </head>
 <body>
 
-<div class="card">
+<div class="card text-mode" id="card">
     <div class="overlay" id="start-overlay">
         <h2>Toca para empezar</h2>
         <div class="divider"></div>
@@ -261,8 +277,10 @@
     // Reemplaza por el ID de tu canción de Spotify (lo que va después de /track/ en el link)
     const spotifyTrackId = "2bvpGAr0UUflIcj1d2mRAx";
 
+    // El paso 1 no usa imagen (se muestra solo el texto, centrado).
+    // Para el paso 2 y para la respuesta "Sí", pon aquí el link directo de TU imagen
+    // (por ejemplo, subiéndola a postimages.org o imgur y copiando el "enlace directo").
     const images = {
-        step1: "https://images.unsplash.com/photo-1749652912678-e38a37bb03e1?fm=jpg&q=80&w=1200&auto=format&fit=crop",
         step2: "https://images.unsplash.com/photo-1687452573021-5857da937651?fm=jpg&q=80&w=1200&auto=format&fit=crop",
         optionYes: "https://images.unsplash.com/photo-1574539299747-c0dcef95d2ef?fm=jpg&q=80&w=1200&auto=format&fit=crop"
     };
@@ -270,7 +288,7 @@
     const captions = {
         step1: "Te tengo una pregunta :)",
         step2: "¿Quieres ser mi novia?",
-        optionYes: "Me ENCANTAS, que rabia. (igual el boton de no, no funciona jeje)"
+        optionYes: "Me ENCANTAS ❤️🖤, que rabia. (igual el boton de no, no funciona jeje)"
     };
 
     const mainImage = document.getElementById('main-image');
@@ -306,9 +324,14 @@
         }, 300);
     }
 
-    setImage(images.step1, captions.step1);
+    const card = document.getElementById('card');
+
+    // Muestra el texto del paso 1 directamente (no hay imagen en este paso)
+    captionText.textContent = captions.step1;
 
     // ============ SPOTIFY IFRAME API ============
+    let hasForcedStart = false;
+
     // Esta función la llama automáticamente el script de Spotify cuando está lista
     window.onSpotifyIframeApiReady = (IFrameAPI) => {
         const element = document.getElementById('spotify-embed');
@@ -319,24 +342,31 @@
         };
         const callback = (EmbedController) => {
             spotifyController = EmbedController;
+
+            // En cuanto detecta que la canción REALMENTE empezó a sonar
+            // (no antes, ni de forma anticipada), la regresa al segundo 0.
+            // Esto evita el problema de que arranque adelantada.
+            spotifyController.addListener('playback_update', (e) => {
+                if (!hasForcedStart && e.data && e.data.isPaused === false) {
+                    hasForcedStart = true;
+                    spotifyController.seek(0);
+                }
+            });
         };
         IFrameAPI.createController(element, options, callback);
     };
 
     // Iniciar música (debe llamarse desde un clic del usuario, por las políticas de autoplay del navegador)
     function startApp() {
-        const playFromStart = () => {
-            spotifyController.seek(0);
-            spotifyController.play();
-        };
+        const tryPlay = () => spotifyController.play();
 
         if (spotifyController) {
-            playFromStart();
+            tryPlay();
         } else {
             // Si la API aún no cargó, reintenta en cuanto esté lista
             const waitForController = setInterval(() => {
                 if (spotifyController) {
-                    playFromStart();
+                    tryPlay();
                     clearInterval(waitForController);
                 }
             }, 200);
@@ -345,6 +375,7 @@
     }
 
     function goToStep2() {
+        card.classList.remove('text-mode');
         setImage(images.step2, captions.step2);
         step1Buttons.classList.add('hidden');
         step2Buttons.classList.remove('hidden');
