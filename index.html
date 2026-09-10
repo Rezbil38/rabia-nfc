@@ -282,7 +282,7 @@
     // (por ejemplo, subiéndola a postimages.org o imgur y copiando el "enlace directo").
     const images = {
         step2: "https://i.postimg.cc/1Xj9Qjdh/rabia.jpg",
-        optionYes: "https://imgur.com/a/um2xGre"
+        optionYes: "https://images.unsplash.com/photo-1574539299747-c0dcef95d2ef?fm=jpg&q=80&w=1200&auto=format&fit=crop"
     };
 
     const captions = {
@@ -330,9 +330,9 @@
     captionText.textContent = captions.step1;
 
     // ============ SPOTIFY IFRAME API ============
-    let hasForcedStart = false;
-
-    // Esta función la llama automáticamente el script de Spotify cuando está lista
+    // Spotify recuerda en dónde quedó la canción la última vez que se reprodujo
+    // en este dispositivo/navegador, y a veces esa posición "gana" a nuestro seek(0)
+    // si lo mandamos demasiado pronto. Por eso insistimos varias veces seguidas.
     window.onSpotifyIframeApiReady = (IFrameAPI) => {
         const element = document.getElementById('spotify-embed');
         const options = {
@@ -342,23 +342,23 @@
         };
         const callback = (EmbedController) => {
             spotifyController = EmbedController;
-
-            // En cuanto detecta que la canción REALMENTE empezó a sonar
-            // (no antes, ni de forma anticipada), la regresa al segundo 0.
-            // Esto evita el problema de que arranque adelantada.
-            spotifyController.addListener('playback_update', (e) => {
-                if (!hasForcedStart && e.data && e.data.isPaused === false) {
-                    hasForcedStart = true;
-                    spotifyController.seek(0);
-                }
-            });
         };
         IFrameAPI.createController(element, options, callback);
     };
 
-    // Iniciar música (debe llamarse desde un clic del usuario, por las políticas de autoplay del navegador)
+    // Iniciar música (debe llamarse desde un clic/toque del usuario; los navegadores
+    // no permiten que el audio arranque solo, sin interacción, por eso existe el botón "Entrar")
     function startApp() {
-        const tryPlay = () => spotifyController.play();
+        const tryPlay = () => {
+            spotifyController.play();
+            // Insiste en volver al segundo 0 varias veces mientras carga,
+            // para ganarle a la posición que Spotify recuerda de antes
+            [50, 200, 400, 700, 1100, 1600].forEach(delay => {
+                setTimeout(() => {
+                    if (spotifyController) spotifyController.seek(0);
+                }, delay);
+            });
+        };
 
         if (spotifyController) {
             tryPlay();
