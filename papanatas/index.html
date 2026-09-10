@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Para ti</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f2f2f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 390px;
+            height: 100vh;
+            max-height: 844px;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 16px 40px 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        /* Pantalla superpuesta para activar audio en iPhone */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .image-container {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 16px;
+        }
+
+        .button-container {
+            width: 100%;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            text-align: center;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background-color: #007aff;
+            color: #ffffff;
+        }
+
+        .btn-success {
+            background-color: #34c759;
+            color: #ffffff;
+        }
+
+        .btn-danger {
+            background-color: #ff3b30;
+            color: #ffffff;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <!-- Pantalla inicial para dar permisos de reproducción de audio -->
+        <div class="overlay" id="start-overlay">
+            <h2 style="margin-bottom: 20px; color: #1c1c1e;">Toca para empezar</h2>
+            <button class="btn btn-primary" style="max-width: 200px;" onclick="startApp()">Entrar 🎵</button>
+        </div>
+
+        <!-- Elemento de Audio en fondo -->
+        <audio id="bg-music" loop preload="auto">
+            <source src="cancion.mp3" type="audio/mpeg">
+            Tu navegador no soporta el formato de audio.
+        </audio>
+
+        <!-- Visualizador de Imagen -->
+        <div class="image-container">
+            <img id="main-image" src="https://via.placeholder.com/400x600?text=Imagen+1" alt="Imagen actual">
+        </div>
+
+        <!-- Botones para cada paso -->
+        <div class="button-container" id="step-1-buttons">
+            <button class="btn btn-primary" onclick="goToStep2()">Siguiente</button>
+        </div>
+
+        <div class="button-container hidden" id="step-2-buttons">
+            <button class="btn btn-success" onclick="chooseOption('si')">Sí</button>
+            <button class="btn btn-danger" onclick="chooseOption('no')">No</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de recursos
+        const images = {
+            step1: "https://via.placeholder.com/400x600?text=Imagen+1",
+            step2: "https://via.placeholder.com/400x600?text=Imagen+2",
+            optionYes: "https://via.placeholder.com/400x600?text=Respuesta+SI",
+            optionNo: "https://via.placeholder.com/400x600?text=Respuesta+NO"
+        };
+
+        const mainImage = document.getElementById('main-image');
+        const step1Buttons = document.getElementById('step-1-buttons');
+        const step2Buttons = document.getElementById('step-2-buttons');
+        const bgMusic = document.getElementById('bg-music');
+        const startOverlay = document.getElementById('start-overlay');
+
+        // Inicia música y oculta la pantalla inicial al primer toque
+        function startApp() {
+            bgMusic.play().catch(error => {
+                console.log("Error al reproducir audio:", error);
+            });
+            startOverlay.classList.add('hidden');
+        }
+
+        // Intento directo de reproducción en carga por si el navegador lo permite
+        window.addEventListener('DOMContentLoaded', () => {
+            bgMusic.play().then(() => {
+                // Si el navegador permitió reproducción automática, ocultamos la pantalla de inicio
+                startOverlay.classList.add('hidden');
+            }).catch(() => {
+                // Si Safari bloqueó el autoplay, la pantalla "Entrar" se queda hasta tocarla
+            });
+        });
+
+        // Cambio a paso 2
+        function goToStep2() {
+            mainImage.src = images.step2;
+            step1Buttons.classList.add('hidden');
+            step2Buttons.classList.remove('hidden');
+        }
+
+        // Selección Sí / No
+        function chooseOption(option) {
+            if (option === 'si') {
+                mainImage.src = images.optionYes;
+            } else if (option === 'no') {
+                mainImage.src = images.optionNo;
+            }
+            step2Buttons.classList.add('hidden');
+        }
+    </script>
+
+</body>
+</html>
