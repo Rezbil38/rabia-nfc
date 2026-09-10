@@ -1,6 +1,6 @@
 const images = {
-    step1: "URL_O_NOMBRE_DE_TU_IMAGEN_1.jpg",
-    step2: "URL_O_NOMBRE_DE_TU_IMAGEN_2.jpg",
-    optionYes: "URL_O_NOMBRE_DE_TU_IMAGEN_SI.jpg",
-    optionNo: "URL_O_NOMBRE_DE_TU_IMAGEN_NO.jpg"
+    step1: "https://pin.it/1gM0gQiqM",
+    step2: "https://pin.it/1RCRAf1jF",
+    optionYes: "https://pin.it/7rLMb5c65",
+    optionNo: "https://pin.it/7rLMb5c65"
 };
