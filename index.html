@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0a0a0a">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Marianusky</title>
+<title>Para ti</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -115,24 +115,25 @@
         margin-bottom: 22px;
     }
 
-    .image-container {
+    .photo-frame {
         width: 100%;
         flex: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        position: relative;
         overflow: hidden;
         border-radius: 16px;
         margin-bottom: 24px;
         background: #111111;
-        border: 1px solid rgba(212, 175, 110, 0.12);
+    }
+
+    .image-container {
+        position: absolute;
+        inset: 0;
     }
 
     .image-container img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        border-radius: 16px;
         opacity: 0;
         transition: opacity 0.7s ease-in-out;
         filter: saturate(0.92) contrast(1.03);
@@ -142,20 +143,35 @@
         opacity: 1;
     }
 
-    /* Modo "solo texto": para el primer paso, sin imagen, centrado */
+    .text-slide {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 34px 22px 22px;
+        background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0) 100%);
+        text-align: center;
+        z-index: 2;
+    }
+
     #card.text-mode .image-container {
         display: none;
     }
 
-    #card.text-mode .caption {
-        flex: 1;
+    #card.text-mode .text-slide {
+        position: static;
+        height: 100%;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
+        background: none;
+        padding: 0 10px;
+    }
+
+    #card.text-mode .caption {
         font-size: 28px;
         line-height: 1.45;
-        margin-bottom: 0;
-        padding: 0 8px;
     }
 
     .caption {
@@ -164,10 +180,16 @@
         font-weight: 500;
         color: #e8d4ab;
         text-align: center;
-        margin-bottom: 20px;
         font-size: 19px;
         letter-spacing: 0.3px;
-        min-height: 24px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+    }
+
+    /* Animación suave al cambiar de texto */
+    .caption.fade-out {
+        opacity: 0;
+        transform: translateY(-6px);
     }
 
     .button-container {
@@ -177,7 +199,6 @@
         justify-content: center;
     }
 
-    /* Botón único de tamaño normal, ya no ocupa todo el ancho */
     .button-container.single {
         justify-content: center;
     }
@@ -199,7 +220,6 @@
         transform: scale(0.96);
     }
 
-    /* Botones que sí deben repartirse el ancho (paso 2: Sí / No) */
     .button-container:not(.single) .btn {
         flex: 1;
     }
@@ -210,8 +230,14 @@
         border: 1px solid rgba(212, 175, 110, 0.6);
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
         background: rgba(212, 175, 110, 0.08);
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        border-color: rgba(212, 175, 110, 0.25);
     }
 
     .btn-success {
@@ -223,8 +249,15 @@
         background: transparent;
         color: #999;
         border: 1px solid rgba(255, 255, 255, 0.15);
-        transition: top 0.22s ease, left 0.22s ease, transform 0.15s ease;
+        transition: top 0.22s ease, left 0.22s ease, transform 0.15s ease, background 0.2s ease, color 0.2s ease;
         z-index: 20;
+    }
+
+    .btn-danger.floating {
+        background: rgba(8, 8, 8, 0.92);
+        color: #e8d4ab;
+        border: 1px solid rgba(212, 175, 110, 0.75);
+        box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
     }
 
     .hidden {
@@ -271,14 +304,12 @@
     <div class="overlay" id="start-overlay">
         <h2>Toca para empezar</h2>
         <div class="divider"></div>
-        <p class="overlay-sub">Sigue un temazo doña UwU.</p>
+        <p class="overlay-sub">Ponte los audífonos, si puedes.</p>
         <button class="btn btn-primary" onclick="startApp()">Entrar</button>
     </div>
 
-    <!-- Contenedor oculto para el reproductor de Spotify -->
     <div id="spotify-embed"></div>
 
-    <!-- Aviso de respaldo: solo aparece si el audio no arrancó (típico en iPhone) -->
     <button class="retry-audio hidden" id="retry-audio" onclick="retryAudio()">🔊 Toca aquí si no escuchas la música</button>
 
     <div class="image-container">
@@ -288,7 +319,7 @@
     <p class="caption" id="caption-text"></p>
 
     <div class="button-container single" id="step-1-buttons">
-        <button class="btn btn-primary" onclick="goToStep2()">Siguiente</button>
+        <button class="btn btn-primary" id="btn-next-step1" onclick="goToStep2()" disabled>Espera (5s)</button>
     </div>
 
     <div class="button-container hidden" id="step-2-buttons">
@@ -301,21 +332,23 @@
 
 <script>
     // ============ CONFIGURACIÓN ============
-    // Reemplaza por el ID de tu canción de Spotify (lo que va después de /track/ en el link)
-    const spotifyTrackId = "2bvpGAr0UUflIcj1d2mRAx";
+    const spotifyTrackId = "35ttE4t8lQZA2vuCYDg4G7";
 
-    // El paso 1 no usa imagen (se muestra solo el texto, centrado).
-    // Para el paso 2 y para la respuesta "Sí", pon aquí el link directo de TU imagen
-    // (por ejemplo, subiéndola a postimages.org o imgur y copiando el "enlace directo").
     const images = {
         step2: "https://i.postimg.cc/8c6rxMyy/Whats-App-Image-2026-09-10-at-6-02-41-PM.jpg",
         optionYes: "https://i.postimg.cc/1Xj9Qjdh/rabia.jpg"
     };
 
+    // Tres frases sucesivas para el primer paso
+    const step1Phrases = [
+        "Hay algo que quiero decirte...",
+        "Desde que te conocí, todo se siente diferente...",
+        "Así que hoy quiero hacerte una pregunta..."
+    ];
+
     const captions = {
-        step1: "Te tengo una pregunta :)",
-        step2: "¿Quieres ser mi novia?",
-        optionYes: "Me ENCANTAS ❤️🖤, que rabia. (igual el boton de no, no funciona jeje)"
+        step2: "¿Quieres ser mi pareja?",
+        optionYes: "Sabía que dirías que sí ✦"
     };
 
     const mainImage = document.getElementById('main-image');
@@ -323,10 +356,12 @@
     const step1Buttons = document.getElementById('step-1-buttons');
     const step2Buttons = document.getElementById('step-2-buttons');
     const startOverlay = document.getElementById('start-overlay');
+    const btnNextStep1 = document.getElementById('btn-next-step1');
 
     let spotifyController = null;
+    let phraseInterval = null;
 
-    // Genera partículas doradas flotando de fondo
+    // Partículas doradas
     function spawnHearts() {
         setInterval(() => {
             const heart = document.createElement('div');
@@ -341,7 +376,7 @@
     }
     spawnHearts();
 
-    // Cambia de imagen con un pequeño fundido (fade)
+    // Cambiar imagen con fundido suave
     function setImage(src, caption) {
         mainImage.classList.remove('show');
         setTimeout(() => {
@@ -353,10 +388,42 @@
 
     const card = document.getElementById('card');
 
-    // Muestra el texto del paso 1 directamente (no hay imagen en este paso)
-    captionText.textContent = captions.step1;
+    // Inicializar primer texto
+    captionText.textContent = step1Phrases[0];
 
-    // ============ SPOTIFY IFRAME API ============
+    // Transición fluida entre las frases (cada 1.5s)
+    function startPhraseCycle() {
+        let index = 0;
+        phraseInterval = setInterval(() => {
+            captionText.classList.add('fade-out');
+            
+            setTimeout(() => {
+                index = (index + 1) % step1Phrases.length;
+                captionText.textContent = step1Phrases[index];
+                captionText.classList.remove('fade-out');
+            }, 400);
+        }, 1500);
+    }
+
+    // Cuenta regresiva de 5 segundos para desbloquear el botón
+    function startCountdown() {
+        let timeLeft = 5;
+        btnNextStep1.disabled = true;
+        btnNextStep1.textContent = `Espera (${timeLeft}s)`;
+
+        const countdownInterval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft > 0) {
+                btnNextStep1.textContent = `Espera (${timeLeft}s)`;
+            } else {
+                clearInterval(countdownInterval);
+                btnNextStep1.disabled = false;
+                btnNextStep1.textContent = "Siguiente";
+            }
+        }, 1000);
+    }
+
+    // SPOTIFY IFRAME API
     let isCurrentlyPlaying = false;
     const retryAudioBtn = document.getElementById('retry-audio');
 
@@ -369,7 +436,6 @@
         };
         const callback = (EmbedController) => {
             spotifyController = EmbedController;
-            // Nos avisa en todo momento si el audio está sonando o no
             spotifyController.addListener('playback_update', (e) => {
                 if (e.data) isCurrentlyPlaying = e.data.isPaused === false;
             });
@@ -377,21 +443,15 @@
         IFrameAPI.createController(element, options, callback);
     };
 
-    // Iniciar música (debe llamarse desde un clic/toque del usuario; los navegadores
-    // no permiten que el audio arranque solo, sin interacción, por eso existe el botón "Entrar")
     function startApp() {
         const tryPlay = () => {
             spotifyController.play();
-            // Insiste en volver al segundo 0 varias veces mientras carga,
-            // para ganarle a la posición que Spotify recuerda de antes
             [50, 200, 400, 700, 1100, 1600].forEach(delay => {
                 setTimeout(() => {
                     if (spotifyController) spotifyController.seek(0);
                 }, delay);
             });
 
-            // Respaldo para iPhone/Safari: si en 1.8s el audio sigue sin sonar,
-            // muestra un botón para reintentar con un toque directo y fresco
             setTimeout(() => {
                 if (!isCurrentlyPlaying) {
                     retryAudioBtn.classList.remove('hidden');
@@ -402,7 +462,6 @@
         if (spotifyController) {
             tryPlay();
         } else {
-            // Si la API aún no cargó, reintenta en cuanto esté lista
             const waitForController = setInterval(() => {
                 if (spotifyController) {
                     tryPlay();
@@ -410,10 +469,14 @@
                 }
             }, 200);
         }
+
         startOverlay.classList.add('hidden');
+        
+        // Iniciar las frases rotativas y la cuenta regresiva del botón al entrar
+        startPhraseCycle();
+        startCountdown();
     }
 
-    // Se llama al tocar el aviso de respaldo: intento fresco, directo desde ese toque
     function retryAudio() {
         if (spotifyController) {
             spotifyController.play();
@@ -423,6 +486,9 @@
     }
 
     function goToStep2() {
+        // Detener el cambio de frases al avanzar
+        if (phraseInterval) clearInterval(phraseInterval);
+
         card.classList.remove('text-mode');
         setImage(images.step2, captions.step2);
         step1Buttons.classList.add('hidden');
@@ -436,7 +502,7 @@
         step2Buttons.classList.add('hidden');
     }
 
-    // ============ BOTÓN "NO" QUE SE ESCAPA ============
+    // BOTÓN "NO" QUE ESCAPA
     const noBtn = document.getElementById('no-btn');
 
     function dodgeNoBtn(e) {
@@ -457,11 +523,8 @@
         noBtn.style.margin = '0';
     }
 
-    // En computador: se escapa apenas el cursor se acerca
     noBtn.addEventListener('mouseenter', dodgeNoBtn);
-    // En celular: se escapa apenas se intenta tocar (antes de que el "click" se complete)
     noBtn.addEventListener('touchstart', dodgeNoBtn, { passive: false });
-    // Por si acaso alguien logra hacer click, igual se mueve y no pasa nada más
     noBtn.addEventListener('click', dodgeNoBtn);
 </script>
 
