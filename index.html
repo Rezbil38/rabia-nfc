@@ -314,13 +314,18 @@
 
     // Iniciar música (debe llamarse desde un clic del usuario, por las políticas de autoplay del navegador)
     function startApp() {
-        if (spotifyController) {
+        const playFromStart = () => {
+            spotifyController.seek(0);
             spotifyController.play();
+        };
+
+        if (spotifyController) {
+            playFromStart();
         } else {
             // Si la API aún no cargó, reintenta en cuanto esté lista
             const waitForController = setInterval(() => {
                 if (spotifyController) {
-                    spotifyController.play();
+                    playFromStart();
                     clearInterval(waitForController);
                 }
             }, 200);
