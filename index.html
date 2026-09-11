@@ -210,6 +210,15 @@
         transform: translateY(-5px);
     }
 
+    .caption-note {
+        display: block;
+        margin-top: 8px;
+        font-size: 13px;
+        font-style: normal;
+        letter-spacing: 0.2px;
+        color: rgba(232, 212, 171, 0.65);
+    }
+
     /* ============ MOSAICO ELEGANTE (pantalla final) ============ */
     .mosaic-container {
         position: absolute;
@@ -386,7 +395,7 @@
     <div class="overlay" id="start-overlay">
         <h2>Toca para empezar</h2>
         <div class="divider"></div>
-        <p class="overlay-sub">Y escucha este temazazo</p>
+        <p class="overlay-sub">Sigue un temazo doña UwU.</p>
         <button class="btn btn-primary" onclick="startApp()">Entrar</button>
     </div>
 
@@ -424,8 +433,8 @@
     const startSongAtSecond = 0;
 
     const images = {
-        step2: "https://i.postimg.cc/8c6rxMyy/Whats-App-Image-2026-09-10-at-6-02-41-PM.jpg",
-        optionYes: "https://i.postimg.cc/1Xj9Qjdh/rabia.jpg"
+        step2: "https://raw.githubusercontent.com/Rezbil38/rabia-nfc/main/foto1.jpg",
+        optionYes: "https://raw.githubusercontent.com/Rezbil38/rabia-nfc/main/foto2.jpg"
     };
 
     const step1Phrases = [
@@ -437,26 +446,35 @@
 
     // Mini frases, palabras y emojis para la pantalla final
     const finalWords = [
-        "Mi persona favorita",
-        "E N C A N T A S 🖤",
-        "Encontento",
-        "Linda",
-        "La mejor",
-        ":))))))",
+        "Mi persona favorita ✦",
+        "E N C A N T A S ❤️",
+        "Nuestra historia ✨",
+        "Juntitos 🖤",
+        "Tú & Yo",
+        "Infinito 💫",
         "Sonrisa hermosa",
-        "Solo tú",
-        "El mejor elemento",
-        "Lindota",
+        "Solo tú 👑",
+        "Contigo todo es mejor 🕯️",
+        "Afortunado de tenerte",
         "❤️🖤",
         "✦ ✦ ✦",
-        "TQM",
-        "Doña UwU",
-        "Hermosa"
+        "Inolvidable 🪐",
+        "Mi lugar seguro ☁️",
+        "Lo sabía jeje 😉",
+        "🥺🤍",
+        "Te quiero mucho 💛",
+        "🫶🏼",
+        "Feliz por esto 🌙",
+        "Mi favorita ⭐",
+        "🔥❤️",
+        "Nuestro momento 💌",
+        "🖤✨🖤",
+        "Qué rabia jajaja 😌"
     ];
 
     const captions = {
         step2: "¿Quieres ser mi novia?",
-        optionYes: "Me E N C A N TASSSS ❤️🖤, que rabia. (igual el boton de no, no funciona jeje)"
+        optionYes: 'Me E N C A N TASSSS ❤️🖤, que rabia.<span class="caption-note">(igual el botón de no, no funciona jeje)</span>'
     };
 
     const mainImage = document.getElementById('main-image');
@@ -489,7 +507,7 @@
         mainImage.classList.remove('show');
         setTimeout(() => {
             mainImage.src = src;
-            captionText.textContent = caption || '';
+            captionText.innerHTML = caption || '';
             mainImage.onload = () => mainImage.classList.add('show');
         }, 300);
     }
@@ -506,11 +524,11 @@
                 captionText.textContent = step1Phrases[index];
                 captionText.classList.remove('fade-out');
             }, 350);
-        }, 2800);
+        }, 2000);
     }
 
     function startCountdown() {
-        let timeLeft = 15;
+        let timeLeft = 11;
         btnNextStep1.disabled = true;
         btnNextStep1.textContent = `Espera (${timeLeft}s)`;
 
