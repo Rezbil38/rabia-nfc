@@ -146,8 +146,8 @@
 
     .frame-inner img.show,
     .frame-inner video.show {
-        opacity: 1;
-        transform: scale(1);
+        opacity: 1 !important;
+        transform: scale(1) !important;
     }
 
     .frame-vignette {
@@ -386,19 +386,19 @@
         <h2>Toca para empezar</h2>
         <div class="divider"></div>
         <p class="overlay-sub">Sigue un temazo doña UwU.</p>
-        <button class="btn btn-primary" onclick="startApp()">Entrar</button>
+        <button class="btn btn-primary" id="btn-entrar" onclick="startApp()">Entrar</button>
     </div>
 
-    <div id="bg-audio-wrap">
-        <audio id="bg-audio" src="./cancion.mp3" preload="auto" playsinline></audio>
-    </div>
+    <!-- Audio MP3 nativo local -->
+    <audio id="bg-audio" src="./cancion.mp3" preload="auto" playsinline></audio>
 
     <button class="retry-audio hidden" id="retry-audio" onclick="retryAudio()">🔊 Toca aquí si no escuchas la música</button>
 
     <div class="photo-frame" id="photo-frame">
         <div class="frame-inner">
             <img id="main-image" src="" alt="Imagen actual">
-            <video id="main-video" class="hidden" src="./nerv.mp4" muted playsinline webkit-playsinline loop preload="auto"></video>
+            <!-- Video MP4 con soporte obligatorio para iOS -->
+            <video id="main-video" class="hidden" muted playsinline webkit-playsinline loop preload="auto" src="./nerv.mp4"></video>
         </div>
         <div class="frame-vignette"></div>
         <div class="mosaic-container hidden" id="mosaic-container">
@@ -424,7 +424,6 @@
 </div>
 
 <script>
-    // Rutas relativas locales a la raíz del repositorio de GitHub
     const images = {
         step2: "./foto1.jpg",
         optionYes: "./foto2.jpg"
@@ -532,22 +531,28 @@
         }, 1000);
     }
 
+    // ============ INICIO SINCRONIZADO DIRECTO EN EL CLIC ============
     function startApp() {
-        // Inicializar y reproducir el audio inmediatamente desde la acción del clic del usuario
+        // 1. Iniciar AUDIO inmediatamente en el evento de toque
         bgAudio.currentTime = 0;
-        const playPromise = bgAudio.play();
-        
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                retryAudioBtn.classList.add('hidden');
-            }).catch(() => {
+        const audioPromise = bgAudio.play();
+        if (audioPromise !== undefined) {
+            audioPromise.catch(() => {
                 retryAudioBtn.classList.remove('hidden');
             });
         }
 
-        // Precargar el video silenciosamente para que esté listo cuando se pase de pantalla en iPhone
+        // 2. Pre-autorizar VIDEO en iOS haciéndole play y pause en el mismo toque
         mainVideo.load();
+        const videoPromise = mainVideo.play();
+        if (videoPromise !== undefined) {
+            videoPromise.then(() => {
+                mainVideo.pause();
+                mainVideo.currentTime = 0;
+            }).catch(() => {});
+        }
 
+        // Ocultar pantalla overlay e iniciar ciclos
         startOverlay.classList.add('hidden');
         startPhraseCycle();
         startCountdown();
@@ -565,17 +570,18 @@
         card.classList.remove('text-mode');
 
         captionText.innerHTML = '';
-        mainVideo.classList.remove('hidden');
-        
-        mainVideo.currentTime = 0;
-        mainVideo.classList.add('show');
-        
-        const videoPromise = mainVideo.play();
-        if (videoPromise !== undefined) {
-            videoPromise.catch(() => {});
-        }
-
         mainImage.classList.remove('show');
+
+        // Mostrar y reproducir el video que ya fue pre-autorizado en startApp()
+        mainVideo.classList.remove('hidden');
+        mainVideo.style.display = 'block';
+        
+        setTimeout(() => {
+            mainVideo.classList.add('show');
+            mainVideo.currentTime = 0;
+            mainVideo.play().catch(() => {});
+        }, 50);
+
         step1Buttons.classList.add('hidden');
         stepVideoButtons.classList.remove('hidden');
     }
@@ -584,6 +590,7 @@
         mainVideo.pause();
         mainVideo.classList.add('hidden');
         mainVideo.classList.remove('show');
+        mainVideo.style.display = 'none';
 
         setImage(images.step2, captions.step2);
         stepVideoButtons.classList.add('hidden');
