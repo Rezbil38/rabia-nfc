@@ -302,7 +302,7 @@
     <p class="caption" id="caption-text"></p>
 
     <div class="button-container single" id="step-1-buttons">
-        <button class="btn btn-primary" id="btn-next-step1" onclick="goToStep2()" disabled>Espera (5s)</button>
+        <button class="btn btn-primary" id="btn-next-step1" onclick="goToStep2()" disabled>Espera (11s)</button>
     </div>
 
     <div class="button-container hidden" id="step-2-buttons">
@@ -315,14 +315,18 @@
 
 <script>
     // ============ CONFIGURACIÓN ============
-    const spotifyTrackId = "2bvpGAr0UUflIcj1d2mRAx";
+    // Canción: 35ttE4t8lQZA2vuCYDg4G7
+    const spotifyTrackId = "35ttE4t8lQZA2vuCYDg4G7";
+
+    // ¿En qué segundo quieres que comience la canción?
+    // Ejemplos: 0 = Inicio, 30 = Segundo 30, 75 = Minuto 1:15
+    const startSongAtSecond = 0; 
 
     const images = {
         step2: "https://i.postimg.cc/8c6rxMyy/Whats-App-Image-2026-09-10-at-6-02-41-PM.jpg",
         optionYes: "https://i.postimg.cc/1Xj9Qjdh/rabia.jpg"
     };
 
-    // Las 3 frases rotativas para la pantalla inicial
     const step1Phrases = [
         "Fuiste engañada 😈, porque...",
         "Te tengo una pregunta :)",
@@ -375,7 +379,7 @@
     // Primera frase inicial antes de rotar
     captionText.textContent = step1Phrases[0];
 
-    // Cambia de frase dinámicamente cada 1.5s
+    // Cambia de frase dinámicamente cada 2s
     function startPhraseCycle() {
         let index = 0;
         phraseInterval = setInterval(() => {
@@ -388,7 +392,7 @@
         }, 2000);
     }
 
-    // Temporizador de 5 segundos para el botón "Siguiente"
+    // Temporizador de 11 segundos para el botón "Siguiente"
     function startCountdown() {
         let timeLeft = 11;
         btnNextStep1.disabled = true;
@@ -429,9 +433,13 @@
     function startApp() {
         const tryPlay = () => {
             spotifyController.play();
+            
+            // Convierte los segundos especificados a milisegundos para Spotify
+            const seekTimeMs = startSongAtSecond * 1000;
+            
             [50, 200, 400, 700, 1100, 1600].forEach(delay => {
                 setTimeout(() => {
-                    if (spotifyController) spotifyController.seek(0);
+                    if (spotifyController) spotifyController.seek(seekTimeMs);
                 }, delay);
             });
 
@@ -463,13 +471,12 @@
     function retryAudio() {
         if (spotifyController) {
             spotifyController.play();
-            setTimeout(() => spotifyController.seek(0), 300);
+            setTimeout(() => spotifyController.seek(startSongAtSecond * 1000), 300);
         }
         retryAudioBtn.classList.add('hidden');
     }
 
     function goToStep2() {
-        // Detener el bucle de las frases al pasar a la pregunta final
         if (phraseInterval) clearInterval(phraseInterval);
 
         card.classList.remove('text-mode');
