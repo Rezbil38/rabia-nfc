@@ -115,6 +115,7 @@
         margin-bottom: 22px;
     }
 
+    /* ============ MARCO DE LA FOTO ============ */
     .photo-frame {
         width: 100%;
         flex: 1;
@@ -133,8 +134,7 @@
         inset: 0;
     }
 
-    .frame-inner img,
-    .frame-inner video {
+    .frame-inner img {
         width: 100%;
         height: 100%;
         object-fit: cover;
@@ -144,10 +144,9 @@
         transform: scale(1.04);
     }
 
-    .frame-inner img.show,
-    .frame-inner video.show {
-        opacity: 1 !important;
-        transform: scale(1) !important;
+    .frame-inner img.show {
+        opacity: 1;
+        transform: scale(1);
     }
 
     .frame-vignette {
@@ -216,6 +215,7 @@
         color: rgba(232, 212, 171, 0.65);
     }
 
+    /* ============ MOSAICO ELEGANTE (pantalla final) ============ */
     .mosaic-container {
         position: absolute;
         inset: 0;
@@ -243,36 +243,30 @@
         font-family: 'Cormorant Garamond', serif;
         font-style: italic;
         letter-spacing: 0.2px;
-        text-shadow: 0 0 16px rgba(232, 193, 120, 0.35), 0 2px 10px rgba(0, 0, 0, 0.9);
+        text-shadow: 0 0 16px rgba(232, 193, 120, 0.35), 0 2px 10px rgba(0, 0, 0, 0.85);
         white-space: nowrap;
         opacity: 0;
         filter: blur(3px);
         transform: scale(0.82) translateY(16px);
         transition: opacity 1.1s ease, transform 1.6s ease, filter 1.1s ease;
         z-index: 2;
-        padding: 4px 10px;
-        border-radius: 8px;
-        background: rgba(5, 5, 5, 0.38);
-        backdrop-filter: blur(3px);
-        -webkit-backdrop-filter: blur(3px);
     }
 
     .mosaic-item.show {
-        opacity: 0.97;
+        opacity: 0.95;
         filter: blur(0);
         transform: scale(1) translateY(-8px);
     }
 
     .mosaic-item.far {
         opacity: 0;
-        color: rgba(241, 226, 191, 0.85);
-        text-shadow: 0 2px 10px rgba(0,0,0,0.85);
-        background: rgba(5, 5, 5, 0.28);
+        color: rgba(232, 212, 171, 0.55);
+        text-shadow: 0 2px 10px rgba(0,0,0,0.7);
     }
 
     .mosaic-item.far.show {
-        opacity: 0.6;
-        filter: blur(1px);
+        opacity: 0.4;
+        filter: blur(1.5px);
     }
 
     .mosaic-item.emoji {
@@ -377,6 +371,15 @@
         from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
         to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
+
+    #spotify-embed {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+        overflow: hidden;
+    }
 </style>
 </head>
 <body>
@@ -385,20 +388,17 @@
     <div class="overlay" id="start-overlay">
         <h2>Toca para empezar</h2>
         <div class="divider"></div>
-        <p class="overlay-sub">Sigue un temazo doña UwU.</p>
-        <button class="btn btn-primary" id="btn-entrar" onclick="startApp()">Entrar</button>
+        <p class="overlay-sub">Y escucha este temazazo</p>
+        <button class="btn btn-primary" onclick="startApp()">Entrar</button>
     </div>
 
-    <!-- Audio MP3 nativo local -->
-    <audio id="bg-audio" src="./cancion.mp3" preload="auto" playsinline></audio>
+    <div id="spotify-embed"></div>
 
     <button class="retry-audio hidden" id="retry-audio" onclick="retryAudio()">🔊 Toca aquí si no escuchas la música</button>
 
     <div class="photo-frame" id="photo-frame">
         <div class="frame-inner">
             <img id="main-image" src="" alt="Imagen actual">
-            <!-- Video MP4 con soporte obligatorio para iOS -->
-            <video id="main-video" class="hidden" muted playsinline webkit-playsinline loop preload="auto" src="./nerv.mp4"></video>
         </div>
         <div class="frame-vignette"></div>
         <div class="mosaic-container hidden" id="mosaic-container">
@@ -410,10 +410,10 @@
     </div>
 
     <div class="button-container single" id="step-1-buttons">
-        <button class="btn btn-primary" id="btn-next-step1" onclick="goToVideoStep()" disabled>Espera (15s)</button>
+        <button class="btn btn-primary" id="btn-next-step1" onclick="goToGifStep()" disabled>Espera (15s)</button>
     </div>
 
-    <div class="button-container hidden single" id="step-video-buttons">
+    <div class="button-container hidden single" id="step-gif-buttons">
         <button class="btn btn-primary" onclick="goToStep2()">Siguiente</button>
     </div>
 
@@ -423,10 +423,16 @@
     </div>
 </div>
 
+<script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+
 <script>
+    const spotifyTrackId = "2bvpGAr0UUflIcj1d2mRAx";
+    const startSongAtSecond = 0;
+
     const images = {
-        step2: "./foto1.jpg",
-        optionYes: "./foto2.jpg"
+        gifStep: "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/nerv.gif",
+        step2: "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/foto1.jpg",
+        optionYes: "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/foto2.jpg"
     };
 
     const step1Phrases = [
@@ -438,41 +444,39 @@
     ];
 
     const finalWords = [
+        "Qué rabia",
+        "🖤✨🖤",
         "Mi persona favorita ✦",
-        "E N C A N T A S ❤️",
-        "Sonrisa hermosa",
-        "Contigo es mejor 🕯️",
-        "Un afortunado",
         "❤️🖤",
+        "E N C A N T A S ❤️",
+        "Hermosa sonrisa :)",
+        "Encacorrado 🫠",
+        "🫶🏼",
+        "Un afortunado",
         "✦ ✦ ✦",
         "Menos mal jeje 😉",
         "❤️🖤🤍",
         "Te quiero mucho 🖤",
-        "🫶🏼",
         "Feliz 🌙",
         "El mejor elemento ⭐",
-        "🔥❤️",
-        "🖤✨🖤",
-        "Qué rabia"
+        "🔥❤️"
     ];
 
     const captions = {
         step2: "¿Quieres ser mi novia?",
-        optionYes: 'Me E N C A N TASSSS ❤️🖤, que rabia.<span class="caption-note">(igual el botón de no, no funcionaba jeje)</span>'
+        optionYes: 'Me E N C A N TASSSS ❤️🖤❤️🖤    que rabia<span class="caption-note">(igual el botón de no, no funcionaba jeje)</span>'
     };
 
     const mainImage = document.getElementById('main-image');
-    const mainVideo = document.getElementById('main-video');
     const captionText = document.getElementById('caption-text');
     const step1Buttons = document.getElementById('step-1-buttons');
-    const stepVideoButtons = document.getElementById('step-video-buttons');
+    const stepGifButtons = document.getElementById('step-gif-buttons');
     const step2Buttons = document.getElementById('step-2-buttons');
     const startOverlay = document.getElementById('start-overlay');
     const btnNextStep1 = document.getElementById('btn-next-step1');
     const mosaicContainer = document.getElementById('mosaic-container');
-    const bgAudio = document.getElementById('bg-audio');
-    const retryAudioBtn = document.getElementById('retry-audio');
 
+    let spotifyController = null;
     let phraseInterval = null;
     let mosaicInterval = null;
 
@@ -531,69 +535,97 @@
         }, 1000);
     }
 
-    // ============ INICIO SINCRONIZADO DIRECTO EN EL CLIC ============
-    function startApp() {
-        // 1. Iniciar AUDIO inmediatamente en el evento de toque
-        bgAudio.currentTime = 0;
-        const audioPromise = bgAudio.play();
-        if (audioPromise !== undefined) {
-            audioPromise.catch(() => {
-                retryAudioBtn.classList.remove('hidden');
+    // ============ SPOTIFY API ============
+    let isCurrentlyPlaying = false;
+    let hasStartedOnce = false;
+    let autoResumedOnce = false;
+    const retryAudioBtn = document.getElementById('retry-audio');
+
+    window.onSpotifyIframeApiReady = (IFrameAPI) => {
+        const element = document.getElementById('spotify-embed');
+        const options = {
+            uri: 'spotify:track:' + spotifyTrackId,
+            width: '1',
+            height: '1'
+        };
+        const callback = (EmbedController) => {
+            spotifyController = EmbedController;
+            spotifyController.addListener('playback_update', (e) => {
+                if (!e.data) return;
+                const nowPlaying = e.data.isPaused === false;
+
+                if (nowPlaying) {
+                    hasStartedOnce = true;
+                }
+
+                if (hasStartedOnce && isCurrentlyPlaying && !nowPlaying && !autoResumedOnce) {
+                    autoResumedOnce = true;
+                    setTimeout(() => {
+                        if (spotifyController) spotifyController.play();
+                    }, 400);
+                }
+
+                isCurrentlyPlaying = nowPlaying;
             });
+        };
+        IFrameAPI.createController(element, options, callback);
+    };
+
+    function startApp() {
+        const tryPlay = () => {
+            spotifyController.play();
+            const seekTimeMs = startSongAtSecond * 1000;
+            [300, 900].forEach(delay => {
+                setTimeout(() => {
+                    if (spotifyController) spotifyController.seek(seekTimeMs);
+                }, delay);
+            });
+
+            setTimeout(() => {
+                if (!isCurrentlyPlaying) {
+                    retryAudioBtn.classList.remove('hidden');
+                }
+            }, 1800);
+        };
+
+        if (spotifyController) {
+            tryPlay();
+        } else {
+            const waitForController = setInterval(() => {
+                if (spotifyController) {
+                    tryPlay();
+                    clearInterval(waitForController);
+                }
+            }, 200);
         }
 
-        // 2. Pre-autorizar VIDEO en iOS haciéndole play y pause en el mismo toque
-        mainVideo.load();
-        const videoPromise = mainVideo.play();
-        if (videoPromise !== undefined) {
-            videoPromise.then(() => {
-                mainVideo.pause();
-                mainVideo.currentTime = 0;
-            }).catch(() => {});
-        }
-
-        // Ocultar pantalla overlay e iniciar ciclos
         startOverlay.classList.add('hidden');
         startPhraseCycle();
         startCountdown();
     }
 
     function retryAudio() {
-        bgAudio.currentTime = 0;
-        bgAudio.play().then(() => {
-            retryAudioBtn.classList.add('hidden');
-        }).catch(() => {});
+        if (spotifyController) {
+            spotifyController.play();
+            setTimeout(() => spotifyController.seek(startSongAtSecond * 1000), 300);
+        }
+        retryAudioBtn.classList.add('hidden');
     }
 
-    function goToVideoStep() {
+    // Pantalla del GIF animado
+    function goToGifStep() {
         if (phraseInterval) clearInterval(phraseInterval);
         card.classList.remove('text-mode');
 
-        captionText.innerHTML = '';
-        mainImage.classList.remove('show');
-
-        // Mostrar y reproducir el video que ya fue pre-autorizado en startApp()
-        mainVideo.classList.remove('hidden');
-        mainVideo.style.display = 'block';
-        
-        setTimeout(() => {
-            mainVideo.classList.add('show');
-            mainVideo.currentTime = 0;
-            mainVideo.play().catch(() => {});
-        }, 50);
+        setImage(images.gifStep, "");
 
         step1Buttons.classList.add('hidden');
-        stepVideoButtons.classList.remove('hidden');
+        stepGifButtons.classList.remove('hidden');
     }
 
     function goToStep2() {
-        mainVideo.pause();
-        mainVideo.classList.add('hidden');
-        mainVideo.classList.remove('show');
-        mainVideo.style.display = 'none';
-
         setImage(images.step2, captions.step2);
-        stepVideoButtons.classList.add('hidden');
+        stepGifButtons.classList.add('hidden');
         step2Buttons.classList.remove('hidden');
     }
 
@@ -645,6 +677,7 @@
         noBtn.style.display = 'none';
     }
 
+    // Botón "No" esquivo
     const noBtn = document.getElementById('no-btn');
 
     function dodgeNoBtn(e) {
