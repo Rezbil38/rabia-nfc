@@ -142,7 +142,6 @@
         opacity: 1;
     }
 
-    /* Modo "solo texto": para el primer paso, sin imagen, centrado */
     #card.text-mode .image-container {
         display: none;
     }
@@ -171,7 +170,6 @@
         transition: opacity 0.35s ease, transform 0.35s ease;
     }
 
-    /* Efecto de transición para el cambio de frases */
     .caption.fade-out {
         opacity: 0;
         transform: translateY(-5px);
@@ -184,7 +182,6 @@
         justify-content: center;
     }
 
-    /* Botón único de tamaño normal */
     .button-container.single {
         justify-content: center;
     }
@@ -206,7 +203,6 @@
         transform: scale(0.96);
     }
 
-    /* Botones paso 2 (Sí / No) */
     .button-container:not(.single) .btn {
         flex: 1;
     }
@@ -221,7 +217,6 @@
         background: rgba(212, 175, 110, 0.08);
     }
 
-    /* Estilo del botón deshabilitado durante la cuenta regresiva */
     .btn-primary:disabled {
         opacity: 0.4;
         cursor: not-allowed;
@@ -268,15 +263,6 @@
         from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
         to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
-
-    #spotify-embed {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        opacity: 0;
-        pointer-events: none;
-        overflow: hidden;
-    }
 </style>
 </head>
 <body>
@@ -289,10 +275,9 @@
         <button class="btn btn-primary" onclick="startApp()">Entrar</button>
     </div>
 
-    <!-- Contenedor oculto para el reproductor de Spotify -->
-    <div id="spotify-embed"></div>
+    <!-- Elemento de audio nativo apuntando a tu archivo en GitHub -->
+    <audio id="bg-music" src="./cancion.mp3" preload="auto"></audio>
 
-    <!-- Aviso de respaldo: solo aparece si el audio no arrancó -->
     <button class="retry-audio hidden" id="retry-audio" onclick="retryAudio()">🔊 Toca aquí si no escuchas la música</button>
 
     <div class="image-container">
@@ -311,22 +296,17 @@
     </div>
 </div>
 
-<script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-
 <script>
-    // ============ CONFIGURACIÓN ============
-    const spotifyTrackId = "2bvpGAr0UUflIcj1d2mRAx";
-
+    // ============ CONFIGURACIÓN DE RUTAS LOCALES ============
     const images = {
-        step2: "https://i.postimg.cc/8c6rxMyy/Whats-App-Image-2026-09-10-at-6-02-41-PM.jpg",
-        optionYes: "https://i.postimg.cc/1Xj9Qjdh/rabia.jpg"
+        step2: "./foto1.jpg",
+        optionYes: "./foto2.jpg"
     };
 
-    // Las 3 frases rotativas para la pantalla inicial
     const step1Phrases = [
         "Te tengo una pregunta :)",
-        "Qué crees que es?",
-        "Es re obvio jsajsjaj"
+        "Llevo un tiempo queriéndote decir algo...",
+        "Así que presta mucha atención..."
     ];
 
     const captions = {
@@ -340,11 +320,12 @@
     const step2Buttons = document.getElementById('step-2-buttons');
     const startOverlay = document.getElementById('start-overlay');
     const btnNextStep1 = document.getElementById('btn-next-step1');
+    const audioPlayer = document.getElementById('bg-music');
+    const retryAudioBtn = document.getElementById('retry-audio');
 
-    let spotifyController = null;
     let phraseInterval = null;
 
-    // Genera partículas doradas flotando de fondo
+    // Partículas doradas
     function spawnHearts() {
         setInterval(() => {
             const heart = document.createElement('div');
@@ -359,7 +340,7 @@
     }
     spawnHearts();
 
-    // Cambia de imagen con un pequeño fundido (fade)
+    // Cambiar imagen
     function setImage(src, caption) {
         mainImage.classList.remove('show');
         setTimeout(() => {
@@ -370,11 +351,9 @@
     }
 
     const card = document.getElementById('card');
-
-    // Primera frase inicial antes de rotar
     captionText.textContent = step1Phrases[0];
 
-    // Cambia de frase dinámicamente cada 1.5s
+    // Rotación de frases
     function startPhraseCycle() {
         let index = 0;
         phraseInterval = setInterval(() => {
@@ -384,12 +363,12 @@
                 captionText.textContent = step1Phrases[index];
                 captionText.classList.remove('fade-out');
             }, 350);
-        }, 2000);
+        }, 1500);
     }
 
-    // Temporizador de 5 segundos para el botón "Siguiente"
+    // Cuenta regresiva botón
     function startCountdown() {
-        let timeLeft = 11;
+        let timeLeft = 5;
         btnNextStep1.disabled = true;
         btnNextStep1.textContent = `Espera (${timeLeft}s)`;
 
@@ -405,72 +384,29 @@
         }, 1000);
     }
 
-    // ============ SPOTIFY IFRAME API ============
-    let isCurrentlyPlaying = false;
-    const retryAudioBtn = document.getElementById('retry-audio');
-
-    window.onSpotifyIframeApiReady = (IFrameAPI) => {
-        const element = document.getElementById('spotify-embed');
-        const options = {
-            uri: 'spotify:track:' + spotifyTrackId,
-            width: '1',
-            height: '1'
-        };
-        const callback = (EmbedController) => {
-            spotifyController = EmbedController;
-            spotifyController.addListener('playback_update', (e) => {
-                if (e.data) isCurrentlyPlaying = e.data.isPaused === false;
-            });
-        };
-        IFrameAPI.createController(element, options, callback);
-    };
-
+    // Iniciar aplicación y audio nativo
     function startApp() {
-        const tryPlay = () => {
-            spotifyController.play();
-            [50, 200, 400, 700, 1100, 1600].forEach(delay => {
-                setTimeout(() => {
-                    if (spotifyController) spotifyController.seek(0);
-                }, delay);
-            });
-
-            setTimeout(() => {
-                if (!isCurrentlyPlaying) {
-                    retryAudioBtn.classList.remove('hidden');
-                }
-            }, 1800);
-        };
-
-        if (spotifyController) {
-            tryPlay();
-        } else {
-            const waitForController = setInterval(() => {
-                if (spotifyController) {
-                    tryPlay();
-                    clearInterval(waitForController);
-                }
-            }, 200);
-        }
+        audioPlayer.currentTime = 0;
         
+        audioPlayer.play().then(() => {
+            retryAudioBtn.classList.add('hidden');
+        }).catch(() => {
+            retryAudioBtn.classList.remove('hidden');
+        });
+
         startOverlay.classList.add('hidden');
-        
-        // Arrancar frases rotativas y la cuenta regresiva al oprimir "Entrar"
         startPhraseCycle();
         startCountdown();
     }
 
     function retryAudio() {
-        if (spotifyController) {
-            spotifyController.play();
-            setTimeout(() => spotifyController.seek(0), 300);
-        }
+        audioPlayer.currentTime = 0;
+        audioPlayer.play();
         retryAudioBtn.classList.add('hidden');
     }
 
     function goToStep2() {
-        // Detener el bucle de las frases al pasar a la pregunta final
         if (phraseInterval) clearInterval(phraseInterval);
-
         card.classList.remove('text-mode');
         setImage(images.step2, captions.step2);
         step1Buttons.classList.add('hidden');
@@ -484,7 +420,7 @@
         step2Buttons.classList.add('hidden');
     }
 
-    // ============ BOTÓN "NO" QUE SE ESCAPA ============
+    // Botón "No" esquivo
     const noBtn = document.getElementById('no-btn');
 
     function dodgeNoBtn(e) {
