@@ -439,12 +439,16 @@
     const spotifyTrackId = "2bvpGAr0UUflIcj1d2mRAx";
     const startSongAtSecond = 0;
 
-    // Se actualizó nerv.gif para que cargue localmente desde la raíz del repositorio
+    // Se especifica la URL CDN completa idéntica al resto de fotos
     const images = {
-        gifStep: "./nerv.gif",
+        gifStep: "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/nerv.gif",
         step2: "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/foto1.jpg",
         optionYes: "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/foto2.jpg"
     };
+
+    // Precargar el GIF en memoria desde el primer segundo para que no se quede en blanco en iPhone
+    const preloadGif = new Image();
+    preloadGif.src = images.gifStep;
 
     const step1Phrases = [
         "Fuiste engañada 😈, porque...",
@@ -511,7 +515,6 @@
             mainImage.src = src;
             captionText.innerHTML = caption || '';
             mainImage.onload = () => mainImage.classList.add('show');
-            // Asegurar la visualización en caso de ser un recurso en caché
             if (mainImage.complete) mainImage.classList.add('show');
         }, 300);
     }
@@ -630,7 +633,8 @@
         if (phraseInterval) clearInterval(phraseInterval);
         card.classList.remove('text-mode');
 
-        setImage(images.gifStep, "");
+        // Se asigna forzadamente con timestamp para asegurar refresco en iOS Safari
+        setImage(images.gifStep + "?v=" + new Date().getTime(), "");
 
         step1Buttons.classList.add('hidden');
         stepGifButtons.classList.remove('hidden');
