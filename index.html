@@ -441,40 +441,33 @@
         "Fuiste engañada 😈, porque...",
         "Te tengo una pregunta :)",
         "Qué crees que es?",
-        "Es re obvio sjajjajsj"
+        "Es re obvio sjajjajsj",
+        "o no?"
     ];
 
     // Mini frases, palabras y emojis para la pantalla final
     const finalWords = [
         "Mi persona favorita ✦",
         "E N C A N T A S ❤️",
-        "Nuestra historia ✨",
-        "Juntitos 🖤",
-        "Tú & Yo",
-        "Infinito 💫",
         "Sonrisa hermosa",
-        "Solo tú 👑",
-        "Contigo todo es mejor 🕯️",
-        "Afortunado de tenerte",
+        "Contigo es mejor 🕯️",
+        "Un afortunado",
         "❤️🖤",
         "✦ ✦ ✦",
-        "Inolvidable 🪐",
-        "Mi lugar seguro ☁️",
-        "Lo sabía jeje 😉",
-        "🥺🤍",
-        "Te quiero mucho 💛",
+        "Menos mal jeje 😉",
+        "❤️🖤🤍",
+        "Te quiero mucho 🖤",
         "🫶🏼",
-        "Feliz por esto 🌙",
-        "Mi favorita ⭐",
+        "Feliz 🌙",
+        "El mejor elemento ⭐",
         "🔥❤️",
-        "Nuestro momento 💌",
         "🖤✨🖤",
-        "Qué rabia jajaja 😌"
+        "Qué rabia"
     ];
 
     const captions = {
         step2: "¿Quieres ser mi novia?",
-        optionYes: 'Me E N C A N TASSSS ❤️🖤, que rabia.<span class="caption-note">(igual el botón de no, no funciona jeje)</span>'
+        optionYes: 'Me E N C A N TASSSS ❤️🖤, que rabia.<span class="caption-note">(igual el botón de no, no funcionaba jeje)</span>'
     };
 
     const mainImage = document.getElementById('main-image');
@@ -524,11 +517,11 @@
                 captionText.textContent = step1Phrases[index];
                 captionText.classList.remove('fade-out');
             }, 350);
-        }, 2000);
+        }, 3000);
     }
 
     function startCountdown() {
-        let timeLeft = 11;
+        let timeLeft = 15;
         btnNextStep1.disabled = true;
         btnNextStep1.textContent = `Espera (${timeLeft}s)`;
 
