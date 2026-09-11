@@ -250,17 +250,22 @@
         font-family: 'Cormorant Garamond', serif;
         font-style: italic;
         letter-spacing: 0.2px;
-        text-shadow: 0 0 16px rgba(232, 193, 120, 0.35), 0 2px 10px rgba(0, 0, 0, 0.85);
+        text-shadow: 0 0 16px rgba(232, 193, 120, 0.35), 0 2px 10px rgba(0, 0, 0, 0.9);
         white-space: nowrap;
         opacity: 0;
         filter: blur(3px);
         transform: scale(0.82) translateY(16px);
         transition: opacity 1.1s ease, transform 1.6s ease, filter 1.1s ease;
         z-index: 2;
+        padding: 4px 10px;
+        border-radius: 8px;
+        background: rgba(5, 5, 5, 0.38);
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
     }
 
     .mosaic-item.show {
-        opacity: 0.95;
+        opacity: 0.97;
         filter: blur(0);
         transform: scale(1) translateY(-8px);
     }
@@ -268,13 +273,14 @@
     /* Variante "de fondo": más pequeña, más borrosa, da sensación de profundidad */
     .mosaic-item.far {
         opacity: 0;
-        color: rgba(232, 212, 171, 0.55);
-        text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+        color: rgba(241, 226, 191, 0.85);
+        text-shadow: 0 2px 10px rgba(0,0,0,0.85);
+        background: rgba(5, 5, 5, 0.28);
     }
 
     .mosaic-item.far.show {
-        opacity: 0.4;
-        filter: blur(1.5px);
+        opacity: 0.6;
+        filter: blur(1px);
     }
 
     .mosaic-item.emoji {
@@ -380,15 +386,6 @@
         from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
         to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
-
-    #spotify-embed {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        opacity: 0;
-        pointer-events: none;
-        overflow: hidden;
-    }
 </style>
 </head>
 <body>
@@ -397,11 +394,13 @@
     <div class="overlay" id="start-overlay">
         <h2>Toca para empezar</h2>
         <div class="divider"></div>
-        <p class="overlay-sub">Y escucha este temazazo</p>
+        <p class="overlay-sub">Sigue un temazo doña UwU.</p>
         <button class="btn btn-primary" onclick="startApp()">Entrar</button>
     </div>
 
-    <div id="spotify-embed"></div>
+    <div id="bg-audio-wrap">
+        <audio id="bg-audio" preload="auto"></audio>
+    </div>
 
     <button class="retry-audio hidden" id="retry-audio" onclick="retryAudio()">🔊 Toca aquí si no escuchas la música</button>
 
@@ -433,11 +432,8 @@
     </div>
 </div>
 
-<script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
-
 <script>
-    const spotifyTrackId = "2bvpGAr0UUflIcj1d2mRAx";
-    const startSongAtSecond = 0;
+    const audioSrc = "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/cancion.mp3";
 
     const images = {
         step2: "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/foto1.jpg",
@@ -451,34 +447,32 @@
         "Te tengo una pregunta :)",
         "Qué crees que es?",
         "Es re obvio sjajjajsj",
-        "o no?",
-        "        "
+        "o no?"
     ];
 
     // Mini frases, palabras y emojis para la pantalla final
     const finalWords = [
-        "Qué rabia",
-        "🖤✨🖤",
         "Mi persona favorita ✦",
-        "❤️🖤",
         "E N C A N T A S ❤️",
-        "Hermosa sonrisa :)",
-        "Encacorrado 🫠",
-        "🫶🏼",
+        "Sonrisa hermosa",
+        "Contigo es mejor 🕯️",
         "Un afortunado",
+        "❤️🖤",
         "✦ ✦ ✦",
         "Menos mal jeje 😉",
         "❤️🖤🤍",
         "Te quiero mucho 🖤",
+        "🫶🏼",
         "Feliz 🌙",
         "El mejor elemento ⭐",
-        "🔥❤️"
-        
+        "🔥❤️",
+        "🖤✨🖤",
+        "Qué rabia"
     ];
 
     const captions = {
         step2: "¿Quieres ser mi novia?",
-        optionYes: 'Me E N C A N TASSSS ❤️🖤❤️🖤    que rabia<span class="caption-note">(igual el botón de no, no funcionaba jeje)</span>'
+        optionYes: 'Me E N C A N TASSSS ❤️🖤, que rabia.<span class="caption-note">(igual el botón de no, no funcionaba jeje)</span>'
     };
 
     const mainImage = document.getElementById('main-image');
@@ -491,7 +485,6 @@
     const btnNextStep1 = document.getElementById('btn-next-step1');
     const mosaicContainer = document.getElementById('mosaic-container');
 
-    let spotifyController = null;
     let phraseInterval = null;
     let mosaicInterval = null;
 
@@ -550,72 +543,35 @@
         }, 1000);
     }
 
-    // ============ SPOTIFY API ============
-    let isCurrentlyPlaying = false;
-    let hasStartedOnce = false;
-    let autoResumedOnce = false;
+    // ============ AUDIO LOCAL (ya no depende de Spotify ni de sus restricciones) ============
+    const bgAudio = document.getElementById('bg-audio');
     const retryAudioBtn = document.getElementById('retry-audio');
+    bgAudio.src = audioSrc;
 
-    window.onSpotifyIframeApiReady = (IFrameAPI) => {
-        const element = document.getElementById('spotify-embed');
-        const options = {
-            uri: 'spotify:track:' + spotifyTrackId,
-            width: '1',
-            height: '1'
-        };
-        const callback = (EmbedController) => {
-            spotifyController = EmbedController;
-            spotifyController.addListener('playback_update', (e) => {
-                if (!e.data) return;
-                const nowPlaying = e.data.isPaused === false;
-
-                if (nowPlaying) {
-                    hasStartedOnce = true;
-                }
-
-                // Si ya había empezado a sonar y de repente se cortó sola, la reanuda una vez
-                if (hasStartedOnce && isCurrentlyPlaying && !nowPlaying && !autoResumedOnce) {
-                    autoResumedOnce = true;
-                    setTimeout(() => {
-                        if (spotifyController) spotifyController.play();
-                    }, 400);
-                }
-
-                isCurrentlyPlaying = nowPlaying;
-            });
-        };
-        IFrameAPI.createController(element, options, callback);
-    };
+    // Si el audio llega a pausarse solo (por ejemplo al cambiar de pantalla en iOS),
+    // se reanuda automáticamente mientras no haya terminado la canción.
+    bgAudio.addEventListener('pause', () => {
+        if (!bgAudio.ended && bgAudio.currentTime > 0) {
+            bgAudio.play().catch(() => {});
+        }
+    });
 
     function startApp() {
-        const tryPlay = () => {
-            spotifyController.play();
-            const seekTimeMs = startSongAtSecond * 1000;
-            // Menos intentos, más espaciados: muchos seguidos parecían inestabilizar
-            // la reproducción en iPhone y cortar el audio a los pocos segundos
-            [300, 900].forEach(delay => {
-                setTimeout(() => {
-                    if (spotifyController) spotifyController.seek(seekTimeMs);
-                }, delay);
+        bgAudio.currentTime = 0;
+        const playPromise = bgAudio.play();
+
+        if (playPromise && playPromise.catch) {
+            playPromise.catch(() => {
+                retryAudioBtn.classList.remove('hidden');
             });
-
-            setTimeout(() => {
-                if (!isCurrentlyPlaying) {
-                    retryAudioBtn.classList.remove('hidden');
-                }
-            }, 1800);
-        };
-
-        if (spotifyController) {
-            tryPlay();
-        } else {
-            const waitForController = setInterval(() => {
-                if (spotifyController) {
-                    tryPlay();
-                    clearInterval(waitForController);
-                }
-            }, 200);
         }
+
+        // Respaldo extra: si por alguna razón sigue en pausa después de un momento
+        setTimeout(() => {
+            if (bgAudio.paused) {
+                retryAudioBtn.classList.remove('hidden');
+            }
+        }, 1000);
 
         startOverlay.classList.add('hidden');
         startPhraseCycle();
@@ -623,10 +579,7 @@
     }
 
     function retryAudio() {
-        if (spotifyController) {
-            spotifyController.play();
-            setTimeout(() => spotifyController.seek(startSongAtSecond * 1000), 300);
-        }
+        bgAudio.play().catch(() => {});
         retryAudioBtn.classList.add('hidden');
     }
 
