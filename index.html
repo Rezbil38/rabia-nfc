@@ -126,6 +126,7 @@
         margin-bottom: 24px;
         background: #111111;
         border: 1px solid rgba(212, 175, 110, 0.12);
+        position: relative;
     }
 
     .image-container img {
@@ -177,6 +178,40 @@
         transform: translateY(-5px);
     }
 
+    /* Contenedor de mini frases dinámicas sobre la última pantalla */
+    .mosaic-container {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 5;
+        overflow: hidden;
+        border-radius: 16px;
+        background: radial-gradient(circle at center, rgba(10, 10, 10, 0.35) 0%, rgba(10, 10, 10, 0.7) 100%);
+    }
+
+    .mosaic-item {
+        position: absolute;
+        color: #e8d4ab;
+        font-family: 'Cormorant Garamond', serif;
+        font-style: italic;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+        white-space: nowrap;
+        opacity: 0;
+        transform: scale(0.85) translateY(10px);
+        transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .mosaic-item.show {
+        opacity: 0.95;
+        transform: scale(1) translateY(0);
+    }
+
+    .mosaic-item.emoji {
+        font-family: 'Montserrat', sans-serif;
+        font-style: normal;
+        filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+    }
+
     .button-container {
         width: 100%;
         display: flex;
@@ -184,7 +219,6 @@
         justify-content: center;
     }
 
-    /* Botón único de tamaño normal */
     .button-container.single {
         justify-content: center;
     }
@@ -206,7 +240,6 @@
         transform: scale(0.96);
     }
 
-    /* Botones paso 2 (Sí / No) */
     .button-container:not(.single) .btn {
         flex: 1;
     }
@@ -221,7 +254,6 @@
         background: rgba(212, 175, 110, 0.08);
     }
 
-    /* Estilo del botón deshabilitado durante la cuenta regresiva */
     .btn-primary:disabled {
         opacity: 0.4;
         cursor: not-allowed;
@@ -289,14 +321,14 @@
         <button class="btn btn-primary" onclick="startApp()">Entrar</button>
     </div>
 
-    <!-- Contenedor oculto para el reproductor de Spotify -->
     <div id="spotify-embed"></div>
 
-    <!-- Aviso de respaldo: solo aparece si el audio no arrancó -->
     <button class="retry-audio hidden" id="retry-audio" onclick="retryAudio()">🔊 Toca aquí si no escuchas la música</button>
 
-    <div class="image-container">
+    <div class="image-container" id="img-wrapper">
         <img id="main-image" src="" alt="Imagen actual">
+        <!-- Capa overlay para las mini frases y emojis -->
+        <div class="mosaic-container hidden" id="mosaic-container"></div>
     </div>
 
     <p class="caption" id="caption-text"></p>
@@ -314,13 +346,8 @@
 <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 
 <script>
-    // ============ CONFIGURACIÓN ============
-    // Canción: 35ttE4t8lQZA2vuCYDg4G7
     const spotifyTrackId = "35ttE4t8lQZA2vuCYDg4G7";
-
-    // ¿En qué segundo quieres que comience la canción?
-    // Ejemplos: 0 = Inicio, 30 = Segundo 30, 75 = Minuto 1:15
-    const startSongAtSecond = 1; 
+    const startSongAtSecond = 0; 
 
     const images = {
         step2: "https://i.postimg.cc/8c6rxMyy/Whats-App-Image-2026-09-10-at-6-02-41-PM.jpg",
@@ -334,6 +361,25 @@
         "Es re obvio sjajjajsj"
     ];
 
+    // Mini frases, palabras y emojis para la pantalla final
+    const finalWords = [
+        "Mi persona favorita ✦",
+        "E N C A N T A S ❤️",
+        "Nuestra historia ✨",
+        "Juntitos 🖤",
+        "Tú & Yo",
+        "Infinito 💫",
+        "Sonrisa hermosa",
+        "Solo tú 👑",
+        "Contigo todo es mejor 🕯️",
+        "Afortunado de tenerte",
+        "❤️🖤",
+        "✦ ✦ ✦",
+        "Inolvidable 🪐",
+        "Mi lugar seguro ☁️",
+        "Lo sabía jeje 😉"
+    ];
+
     const captions = {
         step2: "¿Quieres ser mi novia?",
         optionYes: "Me E N C A N TASSSS ❤️🖤, que rabia. (igual el boton de no, no funciona jeje)"
@@ -345,11 +391,12 @@
     const step2Buttons = document.getElementById('step-2-buttons');
     const startOverlay = document.getElementById('start-overlay');
     const btnNextStep1 = document.getElementById('btn-next-step1');
+    const mosaicContainer = document.getElementById('mosaic-container');
 
     let spotifyController = null;
     let phraseInterval = null;
+    let mosaicInterval = null;
 
-    // Genera partículas doradas flotando de fondo
     function spawnHearts() {
         setInterval(() => {
             const heart = document.createElement('div');
@@ -364,7 +411,6 @@
     }
     spawnHearts();
 
-    // Cambia de imagen con un pequeño fundido (fade)
     function setImage(src, caption) {
         mainImage.classList.remove('show');
         setTimeout(() => {
@@ -375,11 +421,8 @@
     }
 
     const card = document.getElementById('card');
-
-    // Primera frase inicial antes de rotar
     captionText.textContent = step1Phrases[0];
 
-    // Cambia de frase dinámicamente cada 2s
     function startPhraseCycle() {
         let index = 0;
         phraseInterval = setInterval(() => {
@@ -392,7 +435,6 @@
         }, 2000);
     }
 
-    // Temporizador de 11 segundos para el botón "Siguiente"
     function startCountdown() {
         let timeLeft = 11;
         btnNextStep1.disabled = true;
@@ -410,7 +452,7 @@
         }, 1000);
     }
 
-    // ============ SPOTIFY IFRAME API ============
+    // ============ SPOTIFY API ============
     let isCurrentlyPlaying = false;
     const retryAudioBtn = document.getElementById('retry-audio');
 
@@ -433,10 +475,7 @@
     function startApp() {
         const tryPlay = () => {
             spotifyController.play();
-            
-            // Convierte los segundos especificados a milisegundos para Spotify
             const seekTimeMs = startSongAtSecond * 1000;
-            
             [50, 200, 400, 700, 1100, 1600].forEach(delay => {
                 setTimeout(() => {
                     if (spotifyController) spotifyController.seek(seekTimeMs);
@@ -462,8 +501,6 @@
         }
         
         startOverlay.classList.add('hidden');
-        
-        // Arrancar frases rotativas y la cuenta regresiva al oprimir "Entrar"
         startPhraseCycle();
         startCountdown();
     }
@@ -478,21 +515,65 @@
 
     function goToStep2() {
         if (phraseInterval) clearInterval(phraseInterval);
-
         card.classList.remove('text-mode');
         setImage(images.step2, captions.step2);
         step1Buttons.classList.add('hidden');
         step2Buttons.classList.remove('hidden');
     }
 
+    // Sistema para renderizar las frases y emojis fluctuantes
+    function startMosaic() {
+        mosaicContainer.classList.remove('hidden');
+        
+        function addMosaicElement() {
+            const item = document.createElement('div');
+            const text = finalWords[Math.floor(Math.random() * finalWords.length)];
+            
+            item.className = 'mosaic-item';
+            if (text.includes('❤️') || text.includes('✨') || text.includes('💫') || text.includes('👑')) {
+                item.classList.add('emoji');
+            }
+            
+            item.textContent = text;
+            
+            // Posiciones aleatorias distribuidas en la tarjeta
+            const posX = 8 + Math.random() * 68; 
+            const posY = 10 + Math.random() * 75; 
+            const fontSize = 13 + Math.random() * 11;
+            
+            item.style.left = posX + '%';
+            item.style.top = posY + '%';
+            item.style.fontSize = fontSize + 'px';
+
+            mosaicContainer.appendChild(item);
+
+            // Aparición fluida
+            setTimeout(() => item.classList.add('show'), 50);
+
+            // Desaparición y limpieza
+            setTimeout(() => {
+                item.classList.remove('show');
+                setTimeout(() => item.remove(), 900);
+            }, 2800);
+        }
+
+        // Generar elementos iniciales y mantener el ciclo continuo
+        for(let i = 0; i < 4; i++) {
+            setTimeout(addMosaicElement, i * 400);
+        }
+        mosaicInterval = setInterval(addMosaicElement, 850);
+    }
+
     function chooseOption(option) {
         if (option === 'si') {
             setImage(images.optionYes, captions.optionYes);
+            startMosaic();
         }
         step2Buttons.classList.add('hidden');
+        noBtn.style.display = 'none'; // Desactivar el botón flotante
     }
 
-    // ============ BOTÓN "NO" QUE SE ESCAPA ============
+    // Botón "No" esquivo
     const noBtn = document.getElementById('no-btn');
 
     function dodgeNoBtn(e) {
