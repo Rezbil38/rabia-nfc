@@ -115,7 +115,6 @@
         margin-bottom: 22px;
     }
 
-    /* ============ MARCO DE LA FOTO (elegante, no cuadriculado) ============ */
     .photo-frame {
         width: 100%;
         flex: 1;
@@ -151,7 +150,6 @@
         transform: scale(1);
     }
 
-    /* Viñeta suave sobre la foto, para que se sienta cinematográfica y no plana */
     .frame-vignette {
         position: absolute;
         inset: 0;
@@ -160,7 +158,6 @@
         pointer-events: none;
     }
 
-    /* El texto se superpone sobre la foto, como un póster, en vez de ir en una caja aparte */
     .text-slide {
         position: absolute;
         left: 0;
@@ -172,7 +169,6 @@
         z-index: 3;
     }
 
-    /* Modo "solo texto": para el primer paso, sin imagen, centrado */
     #card.text-mode .frame-inner,
     #card.text-mode .frame-vignette {
         display: none;
@@ -206,7 +202,6 @@
         transition: opacity 0.35s ease, transform 0.35s ease;
     }
 
-    /* Efecto de transición para el cambio de frases */
     .caption.fade-out {
         opacity: 0;
         transform: translateY(-5px);
@@ -221,7 +216,6 @@
         color: rgba(232, 212, 171, 0.65);
     }
 
-    /* ============ MOSAICO ELEGANTE (pantalla final) ============ */
     .mosaic-container {
         position: absolute;
         inset: 0;
@@ -230,7 +224,6 @@
         overflow: hidden;
     }
 
-    /* Resplandor dorado ambiental, pulsando lentamente, para dar profundidad */
     .glow-pulse {
         position: absolute;
         inset: -25%;
@@ -270,7 +263,6 @@
         transform: scale(1) translateY(-8px);
     }
 
-    /* Variante "de fondo": más pequeña, más borrosa, da sensación de profundidad */
     .mosaic-item.far {
         opacity: 0;
         color: rgba(241, 226, 191, 0.85);
@@ -351,7 +343,6 @@
         z-index: 20;
     }
 
-    /* Una vez que empieza a escaparse, se ve sólido y con más contraste sobre cualquier foto */
     .btn-danger.floating {
         background: rgba(8, 8, 8, 0.92);
         color: #e8d4ab;
@@ -399,7 +390,7 @@
     </div>
 
     <div id="bg-audio-wrap">
-        <audio id="bg-audio" preload="auto"></audio>
+        <audio id="bg-audio" preload="auto" playsinline></audio>
     </div>
 
     <button class="retry-audio hidden" id="retry-audio" onclick="retryAudio()">🔊 Toca aquí si no escuchas la música</button>
@@ -407,7 +398,7 @@
     <div class="photo-frame" id="photo-frame">
         <div class="frame-inner">
             <img id="main-image" src="" alt="Imagen actual">
-            <video id="main-video" class="hidden" muted playsinline loop></video>
+            <video id="main-video" class="hidden" muted playsinline webkit-playsinline loop preload="auto"></video>
         </div>
         <div class="frame-vignette"></div>
         <div class="mosaic-container hidden" id="mosaic-container">
@@ -433,7 +424,8 @@
 </div>
 
 <script>
-    const audioSrc = "https://raw.githubusercontent.com/Rezbil38/rabia-nfc/main/cancion.mp3";
+    // URL optimizada mediante CDN para solucionar problemas de streaming en iOS Safari
+    const audioSrc = "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/cancion.mp3";
 
     const images = {
         step2: "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/foto1.jpg",
@@ -450,7 +442,6 @@
         "o no?"
     ];
 
-    // Mini frases, palabras y emojis para la pantalla final
     const finalWords = [
         "Mi persona favorita ✦",
         "E N C A N T A S ❤️",
@@ -484,9 +475,13 @@
     const startOverlay = document.getElementById('start-overlay');
     const btnNextStep1 = document.getElementById('btn-next-step1');
     const mosaicContainer = document.getElementById('mosaic-container');
+    const bgAudio = document.getElementById('bg-audio');
+    const retryAudioBtn = document.getElementById('retry-audio');
 
     let phraseInterval = null;
     let mosaicInterval = null;
+
+    bgAudio.src = audioSrc;
 
     function spawnHearts() {
         setInterval(() => {
@@ -543,35 +538,20 @@
         }, 1000);
     }
 
-    // ============ AUDIO LOCAL (ya no depende de Spotify ni de sus restricciones) ============
-    const bgAudio = document.getElementById('bg-audio');
-    const retryAudioBtn = document.getElementById('retry-audio');
-    bgAudio.src = audioSrc;
-
-    // Si el audio llega a pausarse solo (por ejemplo al cambiar de pantalla en iOS),
-    // se reanuda automáticamente mientras no haya terminado la canción.
-    bgAudio.addEventListener('pause', () => {
-        if (!bgAudio.ended && bgAudio.currentTime > 0) {
-            bgAudio.play().catch(() => {});
-        }
-    });
-
+    // Solución para compatibilidad de reproducción en iOS
     function startApp() {
+        // Cargar audio directamente tras la interacción del toque en iOS
+        bgAudio.load();
         bgAudio.currentTime = 0;
+        
         const playPromise = bgAudio.play();
-
-        if (playPromise && playPromise.catch) {
-            playPromise.catch(() => {
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                retryAudioBtn.classList.add('hidden');
+            }).catch(() => {
                 retryAudioBtn.classList.remove('hidden');
             });
         }
-
-        // Respaldo extra: si por alguna razón sigue en pausa después de un momento
-        setTimeout(() => {
-            if (bgAudio.paused) {
-                retryAudioBtn.classList.remove('hidden');
-            }
-        }, 1000);
 
         startOverlay.classList.add('hidden');
         startPhraseCycle();
@@ -579,11 +559,13 @@
     }
 
     function retryAudio() {
-        bgAudio.play().catch(() => {});
-        retryAudioBtn.classList.add('hidden');
+        bgAudio.load();
+        bgAudio.currentTime = 0;
+        bgAudio.play().then(() => {
+            retryAudioBtn.classList.add('hidden');
+        }).catch(() => {});
     }
 
-    // Nueva pantalla intermedia: el video/gif corto
     function goToVideoStep() {
         if (phraseInterval) clearInterval(phraseInterval);
         card.classList.remove('text-mode');
@@ -591,9 +573,19 @@
         captionText.innerHTML = '';
         mainVideo.src = videoSrc;
         mainVideo.classList.remove('hidden');
-        mainVideo.classList.add('show');
+        
+        // Carga explicita para compatibilidad con WebKit / iPhone
+        mainVideo.load();
+        
+        setTimeout(() => {
+            mainVideo.classList.add('show');
+            const videoPromise = mainVideo.play();
+            if (videoPromise !== undefined) {
+                videoPromise.catch(() => {});
+            }
+        }, 100);
+
         mainImage.classList.remove('show');
-        mainVideo.play().catch(() => {});
 
         step1Buttons.classList.add('hidden');
         stepVideoButtons.classList.remove('hidden');
@@ -609,7 +601,6 @@
         step2Buttons.classList.remove('hidden');
     }
 
-    // Sistema para renderizar las frases y emojis fluctuantes, con más profundidad y suavidad
     function startMosaic() {
         mosaicContainer.classList.remove('hidden');
 
