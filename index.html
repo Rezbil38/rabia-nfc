@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Marianusky</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,500&family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
 <style>
     * {
         box-sizing: border-box;
@@ -91,7 +91,7 @@
     }
 
     .overlay h2 {
-        font-family: 'Cormorant Garamond', serif;
+        font-family: 'Playfair Display', serif;
         font-style: italic;
         font-weight: 500;
         font-size: 30px;
@@ -134,7 +134,8 @@
         inset: 0;
     }
 
-    .frame-inner img {
+    .frame-inner img,
+    .frame-inner video {
         width: 100%;
         height: 100%;
         object-fit: cover;
@@ -144,7 +145,8 @@
         transform: scale(1.04);
     }
 
-    .frame-inner img.show {
+    .frame-inner img.show,
+    .frame-inner video.show {
         opacity: 1;
         transform: scale(1);
     }
@@ -406,6 +408,7 @@
     <div class="photo-frame" id="photo-frame">
         <div class="frame-inner">
             <img id="main-image" src="" alt="Imagen actual">
+            <video id="main-video" class="hidden" muted playsinline loop></video>
         </div>
         <div class="frame-vignette"></div>
         <div class="mosaic-container hidden" id="mosaic-container">
@@ -417,7 +420,11 @@
     </div>
 
     <div class="button-container single" id="step-1-buttons">
-        <button class="btn btn-primary" id="btn-next-step1" onclick="goToStep2()" disabled>Espera (11s)</button>
+        <button class="btn btn-primary" id="btn-next-step1" onclick="goToVideoStep()" disabled>Espera (15s)</button>
+    </div>
+
+    <div class="button-container hidden single" id="step-video-buttons">
+        <button class="btn btn-primary" onclick="goToStep2()">Siguiente</button>
     </div>
 
     <div class="button-container hidden" id="step-2-buttons">
@@ -436,6 +443,8 @@
         step2: "https://raw.githubusercontent.com/Rezbil38/rabia-nfc/main/foto1.jpg",
         optionYes: "https://raw.githubusercontent.com/Rezbil38/rabia-nfc/main/foto2.jpg"
     };
+
+    const videoSrc = "https://raw.githubusercontent.com/Rezbil38/rabia-nfc/main/nerv.mp4";
 
     const step1Phrases = [
         "Fuiste engañada 😈, porque...",
@@ -471,8 +480,10 @@
     };
 
     const mainImage = document.getElementById('main-image');
+    const mainVideo = document.getElementById('main-video');
     const captionText = document.getElementById('caption-text');
     const step1Buttons = document.getElementById('step-1-buttons');
+    const stepVideoButtons = document.getElementById('step-video-buttons');
     const step2Buttons = document.getElementById('step-2-buttons');
     const startOverlay = document.getElementById('start-overlay');
     const btnNextStep1 = document.getElementById('btn-next-step1');
@@ -598,11 +609,29 @@
         retryAudioBtn.classList.add('hidden');
     }
 
-    function goToStep2() {
+    // Nueva pantalla intermedia: el video/gif corto
+    function goToVideoStep() {
         if (phraseInterval) clearInterval(phraseInterval);
         card.classList.remove('text-mode');
-        setImage(images.step2, captions.step2);
+
+        captionText.innerHTML = '';
+        mainVideo.src = videoSrc;
+        mainVideo.classList.remove('hidden');
+        mainVideo.classList.add('show');
+        mainImage.classList.remove('show');
+        mainVideo.play().catch(() => {});
+
         step1Buttons.classList.add('hidden');
+        stepVideoButtons.classList.remove('hidden');
+    }
+
+    function goToStep2() {
+        mainVideo.pause();
+        mainVideo.classList.add('hidden');
+        mainVideo.classList.remove('show');
+
+        setImage(images.step2, captions.step2);
+        stepVideoButtons.classList.add('hidden');
         step2Buttons.classList.remove('hidden');
     }
 
