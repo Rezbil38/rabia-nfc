@@ -397,7 +397,7 @@
     <div class="overlay" id="start-overlay">
         <h2>Toca para empezar</h2>
         <div class="divider"></div>
-        <p class="overlay-sub">Y escucha este temazazo.</p>
+        <p class="overlay-sub">Y escucha este temazazo</p>
         <button class="btn btn-primary" onclick="startApp()">Entrar</button>
     </div>
 
@@ -440,20 +440,19 @@
     const startSongAtSecond = 0;
 
     const images = {
-        step2: "https://raw.githubusercontent.com/Rezbil38/rabia-nfc/main/foto1.jpg",
-        optionYes: "https://raw.githubusercontent.com/Rezbil38/rabia-nfc/main/foto2.jpg"
+        step2: "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/foto1.jpg",
+        optionYes: "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/foto2.jpg"
     };
 
-    const videoSrc = "https://raw.githubusercontent.com/Rezbil38/rabia-nfc/main/nerv.mp4";
+    const videoSrc = "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/nerv.mp4";
 
-    const step1Phrases = [ 
-        "          ",
+    const step1Phrases = [
         "Fuiste engañada 😈, porque...",
         "Te tengo una pregunta :)",
         "Qué crees que es?",
         "Es re obvio sjajjajsj",
         "o no?",
-       "          "
+        "        "
     ];
 
     // Mini frases, palabras y emojis para la pantalla final
@@ -461,7 +460,7 @@
         "Mi persona favorita ✦",
         "E N C A N T A S ❤️",
         "Sonrisa hermosa",
-        "Contigo es mas chevere 🕯️",
+        "Contigo es mejor 🕯️",
         "Un afortunado",
         "❤️🖤",
         "✦ ✦ ✦",
@@ -478,7 +477,7 @@
 
     const captions = {
         step2: "¿Quieres ser mi novia?",
-        optionYes: 'Me E N C A N TASSSS ❤️🖤❤️🖤    que rabia<span class="caption-note">(igual el botón de no, no funcionaba jeje)</span>'
+        optionYes: 'Me E N C A N TASSSS ❤️🖤, que rabia.<span class="caption-note">(igual el botón de no, no funcionaba jeje)</span>'
     };
 
     const mainImage = document.getElementById('main-image');
@@ -534,7 +533,7 @@
     }
 
     function startCountdown() {
-        let timeLeft = 18;
+        let timeLeft = 15;
         btnNextStep1.disabled = true;
         btnNextStep1.textContent = `Espera (${timeLeft}s)`;
 
@@ -552,6 +551,8 @@
 
     // ============ SPOTIFY API ============
     let isCurrentlyPlaying = false;
+    let hasStartedOnce = false;
+    let autoResumedOnce = false;
     const retryAudioBtn = document.getElementById('retry-audio');
 
     window.onSpotifyIframeApiReady = (IFrameAPI) => {
@@ -564,7 +565,22 @@
         const callback = (EmbedController) => {
             spotifyController = EmbedController;
             spotifyController.addListener('playback_update', (e) => {
-                if (e.data) isCurrentlyPlaying = e.data.isPaused === false;
+                if (!e.data) return;
+                const nowPlaying = e.data.isPaused === false;
+
+                if (nowPlaying) {
+                    hasStartedOnce = true;
+                }
+
+                // Si ya había empezado a sonar y de repente se cortó sola, la reanuda una vez
+                if (hasStartedOnce && isCurrentlyPlaying && !nowPlaying && !autoResumedOnce) {
+                    autoResumedOnce = true;
+                    setTimeout(() => {
+                        if (spotifyController) spotifyController.play();
+                    }, 400);
+                }
+
+                isCurrentlyPlaying = nowPlaying;
             });
         };
         IFrameAPI.createController(element, options, callback);
@@ -574,7 +590,9 @@
         const tryPlay = () => {
             spotifyController.play();
             const seekTimeMs = startSongAtSecond * 1000;
-            [50, 200, 400, 700, 1100, 1600].forEach(delay => {
+            // Menos intentos, más espaciados: muchos seguidos parecían inestabilizar
+            // la reproducción en iPhone y cortar el audio a los pocos segundos
+            [300, 900].forEach(delay => {
                 setTimeout(() => {
                     if (spotifyController) spotifyController.seek(seekTimeMs);
                 }, delay);
