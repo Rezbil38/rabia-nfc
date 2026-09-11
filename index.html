@@ -390,7 +390,7 @@
     </div>
 
     <div id="bg-audio-wrap">
-        <audio id="bg-audio" preload="auto" playsinline></audio>
+        <audio id="bg-audio" src="./cancion.mp3" preload="auto" playsinline></audio>
     </div>
 
     <button class="retry-audio hidden" id="retry-audio" onclick="retryAudio()">🔊 Toca aquí si no escuchas la música</button>
@@ -398,7 +398,7 @@
     <div class="photo-frame" id="photo-frame">
         <div class="frame-inner">
             <img id="main-image" src="" alt="Imagen actual">
-            <video id="main-video" class="hidden" muted playsinline webkit-playsinline loop preload="auto"></video>
+            <video id="main-video" class="hidden" src="./nerv.mp4" muted playsinline webkit-playsinline loop preload="auto"></video>
         </div>
         <div class="frame-vignette"></div>
         <div class="mosaic-container hidden" id="mosaic-container">
@@ -424,15 +424,11 @@
 </div>
 
 <script>
-    // URL optimizada mediante CDN para solucionar problemas de streaming en iOS Safari
-    const audioSrc = "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/cancion.mp3";
-
+    // Rutas relativas locales a la raíz del repositorio de GitHub
     const images = {
-        step2: "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/foto1.jpg",
-        optionYes: "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/foto2.jpg"
+        step2: "./foto1.jpg",
+        optionYes: "./foto2.jpg"
     };
-
-    const videoSrc = "https://cdn.jsdelivr.net/gh/Rezbil38/rabia-nfc@main/nerv.mp4";
 
     const step1Phrases = [
         "Fuiste engañada 😈, porque...",
@@ -480,8 +476,6 @@
 
     let phraseInterval = null;
     let mosaicInterval = null;
-
-    bgAudio.src = audioSrc;
 
     function spawnHearts() {
         setInterval(() => {
@@ -538,13 +532,11 @@
         }, 1000);
     }
 
-    // Solución para compatibilidad de reproducción en iOS
     function startApp() {
-        // Cargar audio directamente tras la interacción del toque en iOS
-        bgAudio.load();
+        // Inicializar y reproducir el audio inmediatamente desde la acción del clic del usuario
         bgAudio.currentTime = 0;
-        
         const playPromise = bgAudio.play();
+        
         if (playPromise !== undefined) {
             playPromise.then(() => {
                 retryAudioBtn.classList.add('hidden');
@@ -553,13 +545,15 @@
             });
         }
 
+        // Precargar el video silenciosamente para que esté listo cuando se pase de pantalla en iPhone
+        mainVideo.load();
+
         startOverlay.classList.add('hidden');
         startPhraseCycle();
         startCountdown();
     }
 
     function retryAudio() {
-        bgAudio.load();
         bgAudio.currentTime = 0;
         bgAudio.play().then(() => {
             retryAudioBtn.classList.add('hidden');
@@ -571,22 +565,17 @@
         card.classList.remove('text-mode');
 
         captionText.innerHTML = '';
-        mainVideo.src = videoSrc;
         mainVideo.classList.remove('hidden');
         
-        // Carga explicita para compatibilidad con WebKit / iPhone
-        mainVideo.load();
+        mainVideo.currentTime = 0;
+        mainVideo.classList.add('show');
         
-        setTimeout(() => {
-            mainVideo.classList.add('show');
-            const videoPromise = mainVideo.play();
-            if (videoPromise !== undefined) {
-                videoPromise.catch(() => {});
-            }
-        }, 100);
+        const videoPromise = mainVideo.play();
+        if (videoPromise !== undefined) {
+            videoPromise.catch(() => {});
+        }
 
         mainImage.classList.remove('show');
-
         step1Buttons.classList.add('hidden');
         stepVideoButtons.classList.remove('hidden');
     }
@@ -649,7 +638,6 @@
         noBtn.style.display = 'none';
     }
 
-    // Botón "No" esquivo
     const noBtn = document.getElementById('no-btn');
 
     function dodgeNoBtn(e) {
